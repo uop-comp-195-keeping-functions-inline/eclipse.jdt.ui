@@ -1,9 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * This is an implementation of an early-draft specification developed under the Java
+ * Community Process (JCP) and is made available for testing and evaluation purposes
+ * only. The code is not compatible with any specification of the JCP.
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
@@ -42,6 +46,7 @@ import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 
 import org.eclipse.jdt.internal.corext.refactoring.code.IntroduceIndirectionRefactoring;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 import org.eclipse.jdt.internal.ui.IJavaHelpContextIds;
 import org.eclipse.jdt.internal.ui.dialogs.FilteredTypesSelectionDialog;
@@ -138,7 +143,7 @@ public class IntroduceIndirectionInputPage extends UserInputWizardPage {
 		enableReferencesCheckBox.setLayoutData(gd);
 
 		fIntermediaryMethodName.setText(getIntroduceIndirectionRefactoring().getIntermediaryMethodName());
-		fIntermediaryTypeName.setText(getIntroduceIndirectionRefactoring().getIntermediaryClassName());
+		fIntermediaryTypeName.setText(getIntroduceIndirectionRefactoring().getIntermediaryTypeName());
 
 		fIntermediaryMethodName.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
@@ -195,7 +200,8 @@ public class IntroduceIndirectionInputPage extends UserInputWizardPage {
 		IJavaElement[] elements= new IJavaElement[] { proj };
 		IJavaSearchScope scope= SearchEngine.createJavaSearchScope(elements);
 
-		FilteredTypesSelectionDialog dialog= new FilteredTypesSelectionDialog(getShell(), false, getWizard().getContainer(), scope, IJavaSearchConstants.CLASS);
+		int elementKinds= JavaModelUtil.is18OrHigher(proj) ? IJavaSearchConstants.CLASS_AND_INTERFACE : IJavaSearchConstants.CLASS;
+		FilteredTypesSelectionDialog dialog= new FilteredTypesSelectionDialog(getShell(), false, getWizard().getContainer(), scope, elementKinds);
 
 		dialog.setTitle(RefactoringMessages.IntroduceIndirectionInputPage_dialog_choose_declaring_class);
 		dialog.setMessage(RefactoringMessages.IntroduceIndirectionInputPage_dialog_choose_declaring_class_long);
@@ -212,7 +218,7 @@ public class IntroduceIndirectionInputPage extends UserInputWizardPage {
 
 	private void validateInput() {
 		RefactoringStatus merged= new RefactoringStatus();
-		merged.merge(getIntroduceIndirectionRefactoring().setIntermediaryClassName(fIntermediaryTypeName.getText()));
+		merged.merge(getIntroduceIndirectionRefactoring().setIntermediaryTypeName(fIntermediaryTypeName.getText()));
 		merged.merge(getIntroduceIndirectionRefactoring().setIntermediaryMethodName(fIntermediaryMethodName.getText()));
 
 		setPageComplete(!merged.hasError());

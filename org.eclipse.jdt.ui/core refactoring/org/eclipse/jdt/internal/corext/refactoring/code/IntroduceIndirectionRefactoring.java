@@ -111,6 +111,7 @@ import org.eclipse.jdt.internal.corext.refactoring.structure.MemberVisibilityAdj
 import org.eclipse.jdt.internal.corext.refactoring.structure.MemberVisibilityAdjustor.IncomingMemberVisibilityAdjustment;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
@@ -174,13 +175,13 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 	// Intermediary information:
 
 	/**
-	 * The class in which to place the intermediary method
+	 * The type in which to place the intermediary method
 	 */
-	private IType fIntermediaryClass;
+	private IType fIntermediaryType;
 	/**
-	 * The binding of the intermediary class
+	 * The binding of the intermediary type
 	 */
-	private ITypeBinding fIntermediaryClassBinding;
+	private ITypeBinding fIntermediaryTypeBinding;
 	/**
 	 * The name of the intermediary method
 	 */
@@ -260,11 +261,11 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		initialize(0, 0);
 	}
 
-    public IntroduceIndirectionRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
-   		this((ICompilationUnit) null, 0, 0);
-   		RefactoringStatus initializeStatus= initialize(arguments);
-   		status.merge(initializeStatus);
-    }
+	public IntroduceIndirectionRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
+		this((ICompilationUnit) null, 0, 0);
+		RefactoringStatus initializeStatus= initialize(arguments);
+		status.merge(initializeStatus);
+	}
 
 	private void initialize(int offset, int length) {
 		fSelectionStart= offset;
@@ -304,7 +305,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 	public RefactoringStatus setIntermediaryMethodName(String newMethodName) {
 		Assert.isNotNull(newMethodName);
 		fIntermediaryMethodName= newMethodName;
-		IJavaElement context= fIntermediaryClass != null ? fIntermediaryClass : (IMember) fTargetMethod;
+		IJavaElement context= fIntermediaryType != null ? fIntermediaryType : (IMember) fTargetMethod;
 		RefactoringStatus stat= Checks.checkMethodName(newMethodName, context);
 		stat.merge(checkOverloading());
 		return stat;
@@ -312,17 +313,17 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 
 	private RefactoringStatus checkOverloading() {
 		try {
-			if (fIntermediaryClass != null) {
-				IMethod[] toCheck= fIntermediaryClass.getMethods();
+			if (fIntermediaryType != null) {
+				IMethod[] toCheck= fIntermediaryType.getMethods();
 				for (int i= 0; i < toCheck.length; i++) {
 					IMethod method= toCheck[i];
 					if (method.getElementName().equals(fIntermediaryMethodName))
-						return RefactoringStatus.createWarningStatus(Messages.format(RefactoringCoreMessages.IntroduceIndirectionRefactoring_duplicate_method_name_in_declaring_class_error,
+						return RefactoringStatus.createWarningStatus(Messages.format(RefactoringCoreMessages.IntroduceIndirectionRefactoring_duplicate_method_name_in_declaring_type_error,
 								BasicElementLabels.getJavaElementName(fIntermediaryMethodName)));
 				}
 			}
 		} catch (JavaModelException e) {
-			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_could_not_parse_declaring_class_error);
+			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_could_not_parse_declaring_type_error);
 		}
 		return new RefactoringStatus();
 	}
@@ -335,20 +336,20 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 	 * @param fullyQualifiedTypeName the fully qualified name of the intermediary method
 	 * @return status for type name. Use {@link #setIntermediaryMethodName(String)} to check for overridden methods.
 	 */
-	public RefactoringStatus setIntermediaryClassName(String fullyQualifiedTypeName) {
+	public RefactoringStatus setIntermediaryTypeName(String fullyQualifiedTypeName) {
 		IType target= null;
 
 		try {
 			if (fullyQualifiedTypeName.length() == 0)
-				return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_class_not_selected_error);
+				return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_type_not_selected_error);
 
 			// find type (now including secondaries)
 			target= getProject().findType(fullyQualifiedTypeName, new NullProgressMonitor());
 			if (target == null || !target.exists())
-				return RefactoringStatus.createErrorStatus(Messages.format(RefactoringCoreMessages.IntroduceIndirectionRefactoring_class_does_not_exist_error, BasicElementLabels.getJavaElementName(fullyQualifiedTypeName)));
+				return RefactoringStatus.createErrorStatus(Messages.format(RefactoringCoreMessages.IntroduceIndirectionRefactoring_type_does_not_exist_error, BasicElementLabels.getJavaElementName(fullyQualifiedTypeName)));
 			if (target.isAnnotation())
 				return RefactoringStatus.createErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_cannot_create_in_annotation);
-			if (target.isInterface())
+			if (target.isInterface() && !JavaModelUtil.is18OrHigher(getProject()))
 				return RefactoringStatus.createErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_cannot_create_on_interface);
 		} catch (JavaModelException e) {
 			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_unable_determine_declaring_type);
@@ -360,17 +361,17 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		if (target.isBinary())
 			return RefactoringStatus.createErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_cannot_create_in_binary);
 
-		fIntermediaryClass= target;
+		fIntermediaryType= target;
 
 		return new RefactoringStatus();
 	}
 
 	/**
-	 * Returns the class name of the intermediary class, or the empty string if none has been set yet.
-	 * @return the intermediary class name or the empty string
+	 * Returns the type name of the intermediary type, or the empty string if none has been set yet.
+	 * @return the intermediary type name or the empty string
 	 */
-	public String getIntermediaryClassName() {
-		return fIntermediaryClass != null ? fIntermediaryClass.getFullyQualifiedName('.') : ""; //$NON-NLS-1$
+	public String getIntermediaryTypeName() {
+		return fIntermediaryType != null ? fIntermediaryType.getFullyQualifiedName('.') : ""; //$NON-NLS-1$
 	}
 
 	// ********** CONDITION CHECKING **********
@@ -462,11 +463,11 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 			if (fIntermediaryMethodName == null)
 				fIntermediaryMethodName= fTargetMethod.getElementName();
 
-			if (fIntermediaryClass == null) {
+			if (fIntermediaryType == null) {
 				if (fSelectionCompilationUnit != null && !fSelectionCompilationUnit.isReadOnly())
-					fIntermediaryClass= getEnclosingInitialSelectionMember().getDeclaringType();
+					fIntermediaryType= getEnclosingInitialSelectionMember().getDeclaringType();
 				else if (!fTargetMethod.isBinary() && !fTargetMethod.isReadOnly())
-					fIntermediaryClass= fTargetMethod.getDeclaringType();
+					fIntermediaryType= fTargetMethod.getDeclaringType();
 			}
 
 			return new RefactoringStatus();
@@ -481,7 +482,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		RefactoringStatus result= new RefactoringStatus();
 		fTextChangeManager= new TextChangeManager();
 		fIntermediaryFirstParameterType= null;
-		fIntermediaryClassBinding= null;
+		fIntermediaryTypeBinding= null;
 		for (Iterator<CompilationUnitRewrite> iter= fRewrites.values().iterator(); iter.hasNext();)
 			iter.next().clearASTAndImportRewrites();
 
@@ -494,23 +495,23 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		pm.beginTask("", startupTicks + hierarchyTicks + visibilityTicks + referenceTicks + creationTicks); //$NON-NLS-1$
 		pm.setTaskName(RefactoringCoreMessages.IntroduceIndirectionRefactoring_checking_conditions);
 
-		result.merge(Checks.checkMethodName(fIntermediaryMethodName, fIntermediaryClass));
+		result.merge(Checks.checkMethodName(fIntermediaryMethodName, fIntermediaryType));
 		if (result.hasFatalError())
 			return result;
 
-		if (fIntermediaryClass == null)
+		if (fIntermediaryType == null)
 			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_cannot_run_without_intermediary_type);
 
-		// intermediary class is already non binary/non-enum/non-interface.
-		CompilationUnitRewrite imRewrite= getCachedCURewrite(fIntermediaryClass.getCompilationUnit());
-		fIntermediaryClassBinding= typeToBinding(fIntermediaryClass, imRewrite.getRoot());
+		// intermediary type is already non binary/non-enum
+		CompilationUnitRewrite imRewrite= getCachedCURewrite(fIntermediaryType.getCompilationUnit());
+		fIntermediaryTypeBinding= typeToBinding(fIntermediaryType, imRewrite.getRoot());
 
-		fAdjustor= new MemberVisibilityAdjustor(fIntermediaryClass, fIntermediaryClass);
+		fAdjustor= new MemberVisibilityAdjustor(fIntermediaryType, fIntermediaryType);
 		fIntermediaryAdjustments= new HashMap<IMember, IncomingMemberVisibilityAdjustment>();
 
 		// check static method in non-static nested type
-		if (fIntermediaryClassBinding.isNested() && !Modifier.isStatic(fIntermediaryClassBinding.getModifiers()))
-			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_cannot_create_in_nested_nonstatic, JavaStatusContext.create(fIntermediaryClass));
+		if (fIntermediaryTypeBinding.isNested() && !Modifier.isStatic(fIntermediaryTypeBinding.getModifiers()))
+			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.IntroduceIndirectionRefactoring_cannot_create_in_nested_nonstatic, JavaStatusContext.create(fIntermediaryType));
 
 		pm.worked(startupTicks);
 		if (pm.isCanceled())
@@ -533,7 +534,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 
 				// does call see the intermediary method?
 				// => increase visibility of the type of the intermediary method.
-				result.merge(adjustVisibility(fIntermediaryClass, enclosing.getDeclaringType(), new NoOverrideProgressMonitor(pm, 0)));
+				result.merge(adjustVisibility(fIntermediaryType, enclosing.getDeclaringType(), new NoOverrideProgressMonitor(pm, 0)));
 			}
 			pm.worked(referenceTicks);
 		}
@@ -564,7 +565,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		pm.worked(visibilityTicks);
 		pm.setTaskName(RefactoringCoreMessages.IntroduceIndirectionRefactoring_checking_conditions);
 
-		createChangeAndDiscardRewrite(fIntermediaryClass.getCompilationUnit());
+		createChangeAndDiscardRewrite(fIntermediaryType.getCompilationUnit());
 
 		result.merge(Checks.validateModifiesFiles(getAllFilesToModify(), getValidationContext()));
 		pm.done();
@@ -583,11 +584,11 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		// This method is called after all other changes have been
 		// created. Changes induced by this method will be attached to those changes.
 
-		result.merge(adjustVisibility((IType) fIntermediaryFirstParameterType.getJavaElement(), fIntermediaryClass, monitor));
+		result.merge(adjustVisibility((IType) fIntermediaryFirstParameterType.getJavaElement(), fIntermediaryType, monitor));
 		if (result.hasError())
 			return result; // binary
 
-		ModifierKeyword neededVisibility= getNeededVisibility(fTargetMethod, fIntermediaryClass);
+		ModifierKeyword neededVisibility= getNeededVisibility(fTargetMethod, fIntermediaryType);
 		if (neededVisibility != null) {
 
 			result.merge(adjustVisibility(fTargetMethod, neededVisibility,  monitor));
@@ -685,7 +686,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 
 				// does call see the intermediary method?
 				// => increase visibility of the type of the intermediary method.
-				result.merge(adjustVisibility(fIntermediaryClass, enclosingMember.getDeclaringType(), new NoOverrideProgressMonitor(monitor, 0)));
+				result.merge(adjustVisibility(fIntermediaryType, enclosingMember.getDeclaringType(), new NoOverrideProgressMonitor(monitor, 0)));
 
 				if (monitor.isCanceled())
 					throw new OperationCanceledException();
@@ -763,13 +764,13 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		final JDTRefactoringDescriptorComment comment= new JDTRefactoringDescriptorComment(project, this, header);
 		comment.addSetting(Messages.format(RefactoringCoreMessages.IntroduceIndirectionRefactoring_original_pattern, JavaElementLabels.getTextLabel(fTargetMethod, JavaElementLabels.ALL_FULLY_QUALIFIED)));
 		comment.addSetting(Messages.format(RefactoringCoreMessages.IntroduceIndirectionRefactoring_method_pattern, BasicElementLabels.getJavaElementName(fIntermediaryMethodName)));
-		comment.addSetting(Messages.format(RefactoringCoreMessages.IntroduceIndirectionRefactoring_declaring_pattern, JavaElementLabels.getTextLabel(fIntermediaryClass, JavaElementLabels.ALL_FULLY_QUALIFIED)));
+		comment.addSetting(Messages.format(RefactoringCoreMessages.IntroduceIndirectionRefactoring_declaring_pattern, JavaElementLabels.getTextLabel(fIntermediaryType, JavaElementLabels.ALL_FULLY_QUALIFIED)));
 		if (fUpdateReferences)
 			comment.addSetting(RefactoringCoreMessages.JavaRefactoringDescriptor_update_references);
 		final IntroduceIndirectionDescriptor descriptor= RefactoringSignatureDescriptorFactory.createIntroduceIndirectionDescriptor(project, description, comment.asString(), arguments, flags);
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_INPUT, JavaRefactoringDescriptorUtil.elementToHandle(project, fTargetMethod));
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_NAME, fIntermediaryMethodName);
-		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + 1, JavaRefactoringDescriptorUtil.elementToHandle(project, fIntermediaryClass));
+		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + 1, JavaRefactoringDescriptorUtil.elementToHandle(project, fIntermediaryType));
 		arguments.put(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES, Boolean.valueOf(fUpdateReferences).toString());
 		return new DynamicValidationRefactoringChange(descriptor, RefactoringCoreMessages.IntroduceIndirectionRefactoring_introduce_indirection, fTextChangeManager.getAllChanges());
 	}
@@ -788,17 +789,17 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		if (!isStaticTarget())
 			parameterBindings.add(fIntermediaryFirstParameterType);
 		parameterBindings.addAll(Arrays.asList(fTargetMethodBinding.getParameterTypes()));
-		return Checks.checkMethodInType(fIntermediaryClassBinding, fIntermediaryMethodName, parameterBindings.toArray(new ITypeBinding[parameterBindings.size()]));
+		return Checks.checkMethodInType(fIntermediaryTypeBinding, fIntermediaryMethodName, parameterBindings.toArray(new ITypeBinding[parameterBindings.size()]));
 	}
 
 	private void createIntermediaryMethod() throws CoreException {
 
-		CompilationUnitRewrite imRewrite= getCachedCURewrite(fIntermediaryClass.getCompilationUnit());
+		CompilationUnitRewrite imRewrite= getCachedCURewrite(fIntermediaryType.getCompilationUnit());
 		AST ast= imRewrite.getAST();
 		MethodDeclaration intermediary= ast.newMethodDeclaration();
 
 		// Intermediary class is non-anonymous
-		AbstractTypeDeclaration type= (AbstractTypeDeclaration)typeToDeclaration(fIntermediaryClass, imRewrite.getRoot());
+		AbstractTypeDeclaration type= (AbstractTypeDeclaration)typeToDeclaration(fIntermediaryType, imRewrite.getRoot());
 
 		// Name
 		intermediary.setName(ast.newSimpleName(fIntermediaryMethodName));
@@ -830,7 +831,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		// Add other params
 		copyArguments(intermediary, imRewrite);
 
-		// Add type parameters of declaring class (and enclosing classes)
+		// Add type parameters of declaring type (and enclosing types)
 		if (!isStaticTarget() && fIntermediaryFirstParameterType.isGenericType())
 			addTypeParameters(imRewrite, intermediary.typeParameters(), fIntermediaryFirstParameterType);
 
@@ -862,7 +863,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		// method comment
 		ICompilationUnit targetCU= imRewrite.getCu();
 		if (StubUtility.doAddComments(targetCU.getJavaProject())) {
-			String comment= CodeGeneration.getMethodComment(targetCU, getIntermediaryClassName(), intermediary, null, StubUtility.getLineDelimiterUsed(targetCU));
+			String comment= CodeGeneration.getMethodComment(targetCU, getIntermediaryTypeName(), intermediary, null, StubUtility.getLineDelimiterUsed(targetCU));
 			if (comment != null) {
 				Javadoc javadoc= (Javadoc) imRewrite.getASTRewrite().createStringPlaceholder(comment, ASTNode.JAVADOC);
 				intermediary.setJavadoc(javadoc);
@@ -870,7 +871,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		}
 
 		// Add the completed method to the intermediary type:
-		ChildListPropertyDescriptor typeBodyDeclarationsProperty= typeToBodyDeclarationProperty(fIntermediaryClass, imRewrite.getRoot());
+		ChildListPropertyDescriptor typeBodyDeclarationsProperty= typeToBodyDeclarationProperty(fIntermediaryType, imRewrite.getRoot());
 
 		ListRewrite bodyDeclarationsListRewrite= imRewrite.getASTRewrite().getListRewrite(type, typeBodyDeclarationsProperty);
 		bodyDeclarationsListRewrite.insertAt(intermediary, ASTNodes.getInsertionIndex(intermediary, type.bodyDeclarations()), imRewrite
@@ -971,7 +972,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 		List<Expression> originalInvocationArgs= originalInvocation.arguments();
 
 		// static call => always use a qualifier
-		String qualifier= unitRewriter.getImportRewrite().addImport(fIntermediaryClassBinding);
+		String qualifier= unitRewriter.getImportRewrite().addImport(fIntermediaryTypeBinding);
 		newInvocation.setExpression(ASTNodeFactory.newName(unitRewriter.getAST(), qualifier));
 		newInvocation.setName(unitRewriter.getAST().newSimpleName(getIntermediaryMethodName()));
 
@@ -994,7 +995,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 			}
 		} else {
 			if (expression != null) {
-				// Check if expression is the class name. If not, there may
+				// Check if expression is the type name. If not, there may
 				// be side effects (e.g. inside methods) -> don't update
 				if (! (expression instanceof Name) || ASTNodes.getTypeBinding((Name) expression) == null)
 					return createWarningAboutCall(enclosing, originalInvocation, RefactoringCoreMessages.IntroduceIndirectionRefactoring_call_warning_static_expression_access);
@@ -1043,13 +1044,13 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 
 		ITypeBinding currentTypeBinding= null;
 		if (methodDeclaration != null) {
-			// Case 1) : Declaring class is inside this cu => use its name if it's declared in an enclosing type
+			// Case 1) : Declaring type is inside this cu => use its name if it's declared in an enclosing type
 			if (ASTNodes.isParent(originalInvocation, methodDeclaration.getParent()))
 				currentTypeBinding= methodBinding.getDeclaringClass();
 			else
 				currentTypeBinding= ASTNodes.getEnclosingType(originalInvocation);
 		} else {
-			// Case 2) : Declaring class is outside of this cu => find subclass in this cu
+			// Case 2) : Declaring type is outside of this cu => find subclass in this cu
 			ASTNode currentTypeDeclaration= getEnclosingTypeDeclaration(originalInvocation);
 			currentTypeBinding= ASTNodes.getEnclosingType(currentTypeDeclaration);
 			while (currentTypeDeclaration != null && (Bindings.findMethodInHierarchy(currentTypeBinding, methodBinding.getName(), methodBinding.getParameterTypes()) == null)) {
@@ -1138,7 +1139,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 	}
 
 	private boolean isRewriteKept(ICompilationUnit compilationUnit) {
-		return fIntermediaryClass.getCompilationUnit().equals(compilationUnit);
+		return fIntermediaryType.getCompilationUnit().equals(compilationUnit);
 	}
 
 	private void createChangeAndDiscardRewrite(ICompilationUnit compilationUnit) throws CoreException {
@@ -1151,7 +1152,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 
 	private SearchResultGroup[] getReferences(IMethod[] methods, IProgressMonitor pm, RefactoringStatus status) throws CoreException {
 		SearchPattern pattern= RefactoringSearchEngine.createOrPattern(methods, IJavaSearchConstants.REFERENCES);
-		IJavaSearchScope scope= RefactoringScopeFactory.create(fIntermediaryClass, false);
+		IJavaSearchScope scope= RefactoringScopeFactory.create(fIntermediaryType, false);
 		return RefactoringSearchEngine.search(pattern, scope, pm, status);
 	}
 
@@ -1335,8 +1336,8 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 				&& MemberVisibilityAdjustor.needsVisibilityAdjustments(whoToAdjust, neededVisibility, adjustments))
 			adjustments.put(whoToAdjust, new MemberVisibilityAdjustor.IncomingMemberVisibilityAdjustment(whoToAdjust, neededVisibility,
 					RefactoringStatus.createWarningStatus(Messages.format(MemberVisibilityAdjustor.getMessage(whoToAdjust), new String[] {
-							MemberVisibilityAdjustor.getLabel(whoToAdjust), MemberVisibilityAdjustor.getLabel(neededVisibility) }), JavaStatusContext
-							.create(whoToAdjust))));
+						MemberVisibilityAdjustor.getLabel(whoToAdjust), MemberVisibilityAdjustor.getLabel(neededVisibility) }), JavaStatusContext
+						.create(whoToAdjust))));
 	}
 
 	private RefactoringStatus initialize(JavaRefactoringArguments arguments) {
@@ -1355,7 +1356,7 @@ public class IntroduceIndirectionRefactoring extends Refactoring {
 			if (element == null || !element.exists() || element.getElementType() != IJavaElement.TYPE)
 				return JavaRefactoringDescriptorUtil.createInputFatalStatus(element, getName(), IJavaRefactorings.INTRODUCE_INDIRECTION);
 			else
-				fIntermediaryClass= (IType) element;
+				fIntermediaryType= (IType) element;
 		} else
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_ELEMENT + 1));
 		final String references= arguments.getAttribute(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES);
