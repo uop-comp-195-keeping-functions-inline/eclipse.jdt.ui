@@ -4,6 +4,10 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * This is an implementation of an early-draft specification developed under the Java Community Process (JCP) and
+ * is made available for testing and evaluation purposes only.
+ * The code is not compatible with any specification of the JCP.
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
@@ -64,6 +68,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
+import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.Message;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -269,8 +274,10 @@ public class ASTNodes {
 
 	/**
 	 * Returns the type node for the given declaration.
+	 * 
 	 * @param declaration the declaration
-	 * @return the type node
+	 * @return the type node or <code>null</code> if the given declaration represents a type
+	 *         inferred parameter in lambda expression
 	 */
 	public static Type getType(VariableDeclaration declaration) {
 		if (declaration instanceof SingleVariableDeclaration) {
@@ -283,6 +290,9 @@ public class ASTNodes {
 				return ((VariableDeclarationStatement)parent).getType();
 			else if (parent instanceof FieldDeclaration)
 				return ((FieldDeclaration)parent).getType();
+			else if (parent instanceof LambdaExpression) {
+				return null;
+			}
 		}
 		Assert.isTrue(false, "Unknown VariableDeclaration"); //$NON-NLS-1$
 		return null;
