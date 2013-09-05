@@ -677,7 +677,7 @@ public class StubUtility {
 			paramNames[i]= elem.getName().getIdentifier();
 		}
 		String[] exceptionNames= getExceptionNames(decl);
-
+		
 		String returnType= null;
 		if (!decl.isConstructor()) {
 			returnType= ASTNodes.asString(getReturnType(decl));

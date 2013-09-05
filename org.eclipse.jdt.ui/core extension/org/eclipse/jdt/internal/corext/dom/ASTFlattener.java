@@ -1015,7 +1015,7 @@ public class ASTFlattener extends GenericVisitor {
 			}
 		}
 		List<? extends ASTNode> thrownExceptions= node.getAST().apiLevel() >= AST.JLS8 ? node.thrownExceptionTypes() : getThrownExceptions(node);
-		if (!thrownExceptions.isEmpty()) {				
+		if (!thrownExceptions.isEmpty()) {
 			this.fBuffer.append(" throws ");//$NON-NLS-1$
 			for (Iterator<? extends ASTNode> it= thrownExceptions.iterator(); it.hasNext();) {
 				ASTNode n = it.next();
