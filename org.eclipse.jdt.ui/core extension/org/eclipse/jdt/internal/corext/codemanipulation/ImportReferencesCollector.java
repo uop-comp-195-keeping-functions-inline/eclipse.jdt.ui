@@ -200,6 +200,7 @@ public class ImportReferencesCollector extends GenericVisitor {
 	@Override
 	public boolean visit(ArrayType node) {
 		doVisitNode(node.getElementType());
+		doVisitChildren(node.annotations());
 		return false;
 	}
 
@@ -209,6 +210,7 @@ public class ImportReferencesCollector extends GenericVisitor {
 	@Override
 	public boolean visit(SimpleType node) {
 		typeRefFound(node.getName());
+		doVisitChildren(node.annotations());
 		return false;
 	}
 
