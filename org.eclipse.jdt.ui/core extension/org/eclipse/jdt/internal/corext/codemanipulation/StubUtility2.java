@@ -52,7 +52,6 @@ import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
-import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.ReturnStatement;
@@ -127,11 +126,11 @@ public final class StubUtility2 {
 
 		List<SingleVariableDeclaration> parameters= createParameters(unit.getJavaProject(), imports, context, ast, binding, decl);
 
-		List<Name> thrownExceptions= decl.thrownExceptions();
+		List<Type> thrownExceptions= decl.thrownExceptionTypes();
 		ITypeBinding[] excTypes= binding.getExceptionTypes();
 		for (int i= 0; i < excTypes.length; i++) {
 			String excTypeName= imports.addImport(excTypes[i], context);
-			thrownExceptions.add(ASTNodeFactory.newName(ast, excTypeName));
+			thrownExceptions.add(ASTNodeFactory.newType(ast, excTypeName));
 		}
 
 		Block body= ast.newBlock();
@@ -198,11 +197,11 @@ public final class StubUtility2 {
 
 			createParameters(unit.getJavaProject(), imports, context, ast, superConstructor, decl);
 
-			List<Name> thrownExceptions= decl.thrownExceptions();
+			List<Type> thrownExceptions= decl.thrownExceptionTypes();
 			ITypeBinding[] excTypes= superConstructor.getExceptionTypes();
 			for (int i= 0; i < excTypes.length; i++) {
 				String excTypeName= imports.addImport(excTypes[i], context);
-				thrownExceptions.add(ASTNodeFactory.newName(ast, excTypeName));
+				thrownExceptions.add(ASTNodeFactory.newType(ast, excTypeName));
 			}
 		}
 
@@ -322,11 +321,11 @@ public final class StubUtility2 {
 			parameters.add(varDecl);
 		}
 
-		List<Name> thrownExceptions= decl.thrownExceptions();
+		List<Type> thrownExceptions= decl.thrownExceptionTypes();
 		ITypeBinding[] excTypes= delegate.getExceptionTypes();
 		for (int i= 0; i < excTypes.length; i++) {
 			String excTypeName= imports.addImport(excTypes[i], context);
-			thrownExceptions.add(ASTNodeFactory.newName(ast, excTypeName));
+			thrownExceptions.add(ASTNodeFactory.newType(ast, excTypeName));
 		}
 
 		Block body= ast.newBlock();
@@ -427,11 +426,11 @@ public final class StubUtility2 {
 
 		List<SingleVariableDeclaration> parameters= createParameters(unit.getJavaProject(), imports, context, ast, binding, decl);
 
-		List<Name> thrownExceptions= decl.thrownExceptions();
+		List<Type> thrownExceptions= decl.thrownExceptionTypes();
 		ITypeBinding[] excTypes= binding.getExceptionTypes();
 		for (int i= 0; i < excTypes.length; i++) {
 			String excTypeName= imports.addImport(excTypes[i], context);
-			thrownExceptions.add(ASTNodeFactory.newName(ast, excTypeName));
+			thrownExceptions.add(ASTNodeFactory.newType(ast, excTypeName));
 		}
 
 		String delimiter= unit.findRecommendedLineSeparator();

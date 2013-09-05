@@ -497,9 +497,9 @@ public class ASTResolving {
 				if (TagElement.TAG_THROWS.equals(tagElement.getTagName()) || TagElement.TAG_EXCEPTION.equals(tagElement.getTagName())) {
 					ASTNode methNode= tagElement.getParent().getParent();
 					if (methNode instanceof MethodDeclaration) {
-						List<Name> thrownExceptions= ((MethodDeclaration) methNode).thrownExceptions();
+						List<Type> thrownExceptions= ((MethodDeclaration) methNode).thrownExceptionTypes();
 						if (thrownExceptions.size() == 1) {
-							return thrownExceptions.get(0).resolveTypeBinding();
+							return thrownExceptions.get(0).resolveBinding();
 						}
 					}
 				}
@@ -854,7 +854,7 @@ public class ASTResolving {
 				kind= SimilarElementsRequestor.INTERFACES;
 				break;
 			case ASTNode.METHOD_DECLARATION:
-				if (node.getLocationInParent() == MethodDeclaration.THROWN_EXCEPTIONS_PROPERTY) {
+				if (node.getLocationInParent() == MethodDeclaration.THROWN_EXCEPTION_TYPES_PROPERTY) {
 					kind= SimilarElementsRequestor.CLASSES;
 				} else if (node.getLocationInParent() == MethodDeclaration.RETURN_TYPE2_PROPERTY) {
 					kind= SimilarElementsRequestor.ALL_TYPES | SimilarElementsRequestor.VOIDTYPE;

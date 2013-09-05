@@ -5,13 +5,16 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * This is an implementation of an early-draft specification developed under the Java Community Process (JCP) and
+ * is made available for testing and evaluation purposes only.
+ * The code is not compatible with any specification of the JCP.
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.codemanipulation;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.jface.text.Region;
@@ -385,11 +388,13 @@ public class ImportReferencesCollector extends GenericVisitor {
 		if (!node.isConstructor()) {
 			doVisitNode(node.getReturnType2());
 		}
+		// name not visited
+		doVisitNode(node.getReceiverType());
+		// receiverQualifier not visited
+		doVisitNode(node.getReceiverQualifier());
 		doVisitChildren(node.parameters());
-		Iterator<Name> iter=node.thrownExceptions().iterator();
-		while (iter.hasNext()) {
-			typeRefFound(iter.next());
-		}
+		doVisitChildren(node.extraDimensions());
+		doVisitChildren(node.thrownExceptionTypes());
 		if (!fSkipMethodBodies) {
 			doVisitNode(node.getBody());
 		}
