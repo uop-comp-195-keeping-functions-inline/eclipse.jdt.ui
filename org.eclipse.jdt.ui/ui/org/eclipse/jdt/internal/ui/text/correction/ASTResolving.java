@@ -5,6 +5,10 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * This is an implementation of an early-draft specification developed under the Java
+ * Community Process (JCP) and is made available for testing and evaluation purposes
+ * only. The code is not compatible with any specification of the JCP.
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -651,11 +655,14 @@ public class ASTResolving {
 	}
 
 	/**
-	 * Finds the parent type of a node.
+	 * Finds the ancestor type of <code>node</code> (includes <code>node</code> in the search).
 	 *
-	 * @param node the node inside the type to find
-	 * @param treatModifiersOutside if set, modifiers are not part of their type, but of the type's parent
-	 * @return returns either a AbstractTypeDeclaration or an AnonymousTypeDeclaration
+	 * @param node the node to start the search from, can be <code>null</code>
+	 * @param treatModifiersOutside if set, modifiers are not part of their type, but of the type's
+	 *            parent
+	 * @return returns the ancestor type of <code>node</code> (AbstractTypeDeclaration or
+	 *         AnonymousTypeDeclaration) if any (including <code>node</code>), <code>null</code>
+	 *         otherwise
 	 */
 	public static ASTNode findParentType(ASTNode node, boolean treatModifiersOutside) {
 		StructuralPropertyDescriptor lastLocation= null;
@@ -675,6 +682,14 @@ public class ASTResolving {
 		return null;
 	}
 
+	/**
+	 * Finds the ancestor type of <code>node</code> (includes <code>node</code> in the search).
+	 *
+	 * @param node the node to start the search from, can be <code>null</code>
+	 * @return returns the ancestor type of <code>node</code> (AbstractTypeDeclaration or
+	 *         AnonymousTypeDeclaration) if any (including <code>node</code>), <code>null</code>
+	 *         otherwise
+	 */
 	public static ASTNode findParentType(ASTNode node) {
 		return findParentType(node, false);
 	}
