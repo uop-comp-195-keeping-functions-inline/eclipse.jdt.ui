@@ -674,11 +674,10 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 		ImportRewriteUtil.collectImports(sourceProject, declaration, fTypeBindings, fStaticBindings, true);
 		ASTRewrite rewrite= ASTRewrite.create(declaration.getAST());
 		ITrackedNodePosition position= rewrite.track(declaration);
-		if (declaration.getBody() != null)
-			rewrite.remove(declaration.getBody(), null);
 		ListRewrite list= rewrite.getListRewrite(declaration, declaration.getModifiersProperty());
 		boolean publicFound= false;
 		boolean abstractFound= false;
+		boolean defaultFound= false;
 		Annotation annotation= null;
 		for (IExtendedModifier extended : (List<IExtendedModifier>) declaration.modifiers()) {
 			if (!extended.isAnnotation()) {
@@ -691,6 +690,11 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 					abstractFound= true;
 					continue;
 				}
+				if (modifier.getKeyword().equals(Modifier.ModifierKeyword.DEFAULT_KEYWORD)) {
+					defaultFound= true;
+					continue;
+				}
+
 				list.remove(modifier, null);
 			} else if (extended.isAnnotation()) {
 				annotation= (Annotation) extended;
@@ -699,10 +703,13 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 					list.remove(annotation, null);
 			}
 		}
+
+		if (!defaultFound && declaration.getBody() != null)
+			rewrite.remove(declaration.getBody(), null);
 		ModifierRewrite rewriter= ModifierRewrite.create(rewrite, declaration);
 		if (fPublic && !publicFound)
 			rewriter.setVisibility(Modifier.PUBLIC, null);
-		if (fAbstract && !abstractFound)
+		if (fAbstract && !abstractFound && !defaultFound)
 			rewriter.setModifiers(Modifier.ABSTRACT, 0, null);
 		
 		updateReceiverParameter(declaration, rewrite, targetDeclaration.getName().getIdentifier());

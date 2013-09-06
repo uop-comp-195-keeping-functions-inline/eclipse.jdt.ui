@@ -58,6 +58,7 @@ public class AllRefactoringTests {
 		suite.addTest(MoveInnerToTopLevelTests.suite());
 		suite.addTest(UseSupertypeWherePossibleTests.suite());
 		suite.addTest(ExtractClassTests.suite());
+		suite.addTest(RefactoringTests18.suite());
 
 		//-- generics
 		suite.addTest(InferTypeArgumentsTests.suite());
