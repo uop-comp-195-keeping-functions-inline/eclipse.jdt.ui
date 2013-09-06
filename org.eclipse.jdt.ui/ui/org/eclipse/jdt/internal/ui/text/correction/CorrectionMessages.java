@@ -5,6 +5,10 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * This is an implementation of an early-draft specification developed under the Java
+ * Community Process (JCP) and is made available for testing and evaluation purposes
+ * only. The code is not compatible with any specification of the JCP.
+ * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Benjamin Muskalla <b.muskalla@gmx.net> - [quick fix] Quick fix for missing synchronized modifier - https://bugs.eclipse.org/bugs/show_bug.cgi?id=245250
@@ -32,6 +36,7 @@ public final class CorrectionMessages extends NLS {
 	public static String LocalCorrectionsSubProcessor_renaming_duplicate_method;
 	public static String LocalCorrectionsSubProcessor_replacefieldaccesswithmethod_description;
 	public static String ModifierCorrectionSubProcessor_addstatic_description;
+	public static String ModifierCorrectionSubProcessor_adddefault_description;
 	public static String ModifierCorrectionSubProcessor_addstatictoparenttype_description;
 	public static String ModifierCorrectionSubProcessor_addsynchronized_description;
 	public static String ModifierCorrectionSubProcessor_changefieldmodifiertononstatic_description;
