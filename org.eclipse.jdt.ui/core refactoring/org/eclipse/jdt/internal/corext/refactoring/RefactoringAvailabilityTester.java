@@ -864,8 +864,8 @@ public final class RefactoringAvailabilityTester {
 			return false;
 		if (type == IJavaElement.METHOD && declaring.isInterface()) {
 			boolean is18OrHigher= JavaModelUtil.is18OrHigher(member.getJavaProject());
-			if (!is18OrHigher || (is18OrHigher && !Flags.isStatic(member.getFlags())))
-				return false;			
+			if (!is18OrHigher || !Flags.isStatic(member.getFlags()))
+				return false;
 		}
 		if (type == IJavaElement.METHOD && !JdtFlags.isStatic(member))
 			return false;
