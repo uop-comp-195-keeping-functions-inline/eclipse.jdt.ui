@@ -5,6 +5,10 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * This is an implementation of an early-draft specification developed under the Java
+ * Community Process (JCP) and is made available for testing and evaluation purposes
+ * only. The code is not compatible with any specification of the JCP.
+ * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Billy Huang <billyhuang31@gmail.com> - [quick assist] concatenate/merge string literals - https://bugs.eclipse.org/77632
@@ -45,6 +49,8 @@ public interface IProposalRelevance {
 	public static final int CREATE_FIELD_PREFIX_OR_SUFFIX_MATCH= 9;
 
 	public static final int ADD_ABSTRACT_MODIFIER= 8;
+	public static final int ADD_STATIC_MODIFIER= 8;
+	public static final int ADD_DEFAULT_MODIFIER= 8;
 	public static final int ADD_PARENTHESES_AROUND_CAST= 8;
 	public static final int REMOVE_ARGUMENTS= 8;
 	public static final int QUALIFY_WITH_ENCLOSING_TYPE= 8;
