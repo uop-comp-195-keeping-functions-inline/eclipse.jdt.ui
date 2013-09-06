@@ -5,6 +5,10 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * This is an implementation of an early-draft specification developed under the Java
+ * Community Process (JCP) and is made available for testing and evaluation purposes
+ * only. The code is not compatible with any specification of the JCP.
+ * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Benjamin Muskalla <bmuskalla@innoopract.com> - [quick fix] 'Remove invalid modifiers' does not appear for enums and annotations - https://bugs.eclipse.org/bugs/show_bug.cgi?id=110589
@@ -387,7 +391,10 @@ public class ModifierCorrectionSubProcessor {
 					label= CorrectionMessages.ModifierCorrectionSubProcessor_removevolatile_description;
 					break;
 				case IProblem.IllegalModifierForInterfaceMethod:
-					excludedModifiers= ~(Modifier.PUBLIC | Modifier.ABSTRACT);
+					if (cu != null && JavaModelUtil.is18OrHigher(cu.getJavaProject()))
+						excludedModifiers= ~(Modifier.PUBLIC | Modifier.ABSTRACT | Modifier.STATIC | Modifier.DEFAULT);
+					else
+						excludedModifiers= ~(Modifier.PUBLIC | Modifier.ABSTRACT);
 					break;
 				case IProblem.IllegalModifierForInterface:
 					excludedModifiers= ~(Modifier.PUBLIC | Modifier.ABSTRACT | Modifier.STRICTFP);
@@ -434,6 +441,9 @@ public class ModifierCorrectionSubProcessor {
 					break;
 				case IProblem.IllegalModifierForMemberEnum:
 					excludedModifiers= ~(Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED | Modifier.STATIC | Modifier.STRICTFP);
+					break;
+				case IProblem.IllegalModifierForInterfaceMethod18:
+					excludedModifiers= ~(Modifier.PUBLIC | Modifier.ABSTRACT | Modifier.STRICTFP | Modifier.DEFAULT | Modifier.STATIC);
 					break;
 				default:
 					Assert.isTrue(false, "not supported"); //$NON-NLS-1$
