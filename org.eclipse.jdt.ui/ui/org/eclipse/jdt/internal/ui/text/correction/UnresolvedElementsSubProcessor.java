@@ -5,6 +5,10 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * This is an implementation of an early-draft specification developed under the Java
+ * Community Process (JCP) and is made available for testing and evaluation purposes
+ * only. The code is not compatible with any specification of the JCP.
+ * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Renaud Waldura &lt;renaud+eclipse@waldura.com&gt; - New class/interface with wizard
@@ -1196,6 +1200,7 @@ public class UnresolvedElementsSubProcessor {
 				if (parameterTypes != null) {
 					String sig= ASTResolving.getMethodSignature(methodName, parameterTypes, false);
 
+					boolean is18OrHigher= JavaModelUtil.is18OrHigher(targetCU.getJavaProject());
 					if (ASTResolving.isUseableTypeInContext(parameterTypes, senderDeclBinding, false)) {
 						if (nodeParentType == senderDeclBinding) {
 							label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_createmethod_description, sig);
@@ -1204,17 +1209,22 @@ public class UnresolvedElementsSubProcessor {
 							label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_createmethod_other_description, new Object[] { sig, BasicElementLabels.getJavaElementName(senderDeclBinding.getName()) } );
 							image= JavaPluginImages.get(JavaPluginImages.IMG_MISC_PUBLIC);
 						}
-						proposals.add(new NewMethodCorrectionProposal(label, targetCU, invocationNode, arguments, senderDeclBinding, IProposalRelevance.CREATE_METHOD, image));
+						if (is18OrHigher
+								|| !(senderDeclBinding.isInterface() && (nodeParentType == senderDeclBinding || sender instanceof SimpleName
+										&& ((SimpleName) sender).getFullyQualifiedName().equals(senderDeclBinding.getName()))))
+							proposals.add(new NewMethodCorrectionProposal(label, targetCU, invocationNode, arguments, senderDeclBinding, IProposalRelevance.CREATE_METHOD, image));
 					}
 					if (senderDeclBinding.isNested() && cu.equals(targetCU) && sender == null && Bindings.findMethodInHierarchy(senderDeclBinding, methodName, (ITypeBinding[]) null) == null) { // no covering method
 						ASTNode anonymDecl= astRoot.findDeclaringNode(senderDeclBinding);
 						if (anonymDecl != null) {
 							senderDeclBinding= Bindings.getBindingOfParentType(anonymDecl.getParent());
 							if (!senderDeclBinding.isAnonymous() && ASTResolving.isUseableTypeInContext(parameterTypes, senderDeclBinding, false)) {
-								String[] args= new String[] { sig, ASTResolving.getTypeSignature(senderDeclBinding) };
-								label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_createmethod_other_description, args);
-								image= JavaPluginImages.get(JavaPluginImages.IMG_MISC_PROTECTED);
-								proposals.add(new NewMethodCorrectionProposal(label, targetCU, invocationNode, arguments, senderDeclBinding, IProposalRelevance.CREATE_METHOD, image));
+								if (senderDeclBinding.isClass() || (is18OrHigher && senderDeclBinding.isInterface())) {
+									String[] args= new String[] { sig, ASTResolving.getTypeSignature(senderDeclBinding) };
+									label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_createmethod_other_description, args);
+									image= JavaPluginImages.get(JavaPluginImages.IMG_MISC_PROTECTED);
+									proposals.add(new NewMethodCorrectionProposal(label, targetCU, invocationNode, arguments, senderDeclBinding, IProposalRelevance.CREATE_METHOD, image));
+								}
 							}
 						}
 					}

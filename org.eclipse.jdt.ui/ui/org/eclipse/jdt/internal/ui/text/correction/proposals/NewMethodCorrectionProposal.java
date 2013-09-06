@@ -30,6 +30,7 @@ import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IExtendedModifier;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -42,6 +43,7 @@ import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
+import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeParameter;
@@ -52,6 +54,8 @@ import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRe
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.corext.util.JdtFlags;
 
 import org.eclipse.jdt.internal.ui.text.correction.ASTResolving;
 import org.eclipse.jdt.internal.ui.text.correction.ModifierCorrectionSubProcessor;
@@ -73,14 +77,12 @@ public class NewMethodCorrectionProposal extends AbstractMethodCorrectionProposa
 		if (getSenderBinding().isAnnotation()) {
 			return 0;
 		}
-		if (getSenderBinding().isInterface()) {
-			// for interface and annotation members copy the modifiers from an existing field
-			MethodDeclaration[] methodDecls= ((TypeDeclaration) targetTypeDecl).getMethods();
-			if (methodDecls.length > 0) {
-				return methodDecls[0].getModifiers();
-			}
-			return 0;
-		}
+
+		boolean is18OrHigher= JavaModelUtil.is18OrHigher(getCompilationUnit().getJavaProject());
+		// only abstract methods are allowed for interface present in less than Java 1.8
+		if (!is18OrHigher && getSenderBinding().isInterface())
+			return getExistingMemberModifiers(targetTypeDecl, Modifier.ABSTRACT);
+
 		ASTNode invocationNode= getInvocationNode();
 		if (invocationNode instanceof MethodInvocation) {
 			int modifiers= 0;
@@ -93,8 +95,13 @@ public class NewMethodCorrectionProposal extends AbstractMethodCorrectionProposa
 				modifiers |= Modifier.STATIC;
 			}
 			ASTNode node= ASTResolving.findParentType(invocationNode);
-			if (targetTypeDecl.equals(node)) {
-				modifiers |= Modifier.PRIVATE;
+			if (node instanceof TypeDeclaration && ((TypeDeclaration) node).isInterface() || (targetTypeDecl instanceof TypeDeclaration && ((TypeDeclaration) targetTypeDecl).isInterface())) {
+				if (expression != null && (expression instanceof ThisExpression || ((Name) expression).resolveBinding().getKind() == IBinding.VARIABLE))
+					modifiers|= getExistingMemberModifiers(targetTypeDecl, Modifier.ABSTRACT);
+				else
+					modifiers|= getExistingMemberModifiers(targetTypeDecl, Modifier.STATIC) | Modifier.STATIC;
+			} else if (targetTypeDecl.equals(node)) {
+					modifiers|= Modifier.PRIVATE;
 			} else if (node instanceof AnonymousClassDeclaration && ASTNodes.isParent(node, targetTypeDecl)) {
 				modifiers |= Modifier.PROTECTED;
 				if (ASTResolving.isInStaticContext(node) && expression == null) {
@@ -106,6 +113,26 @@ public class NewMethodCorrectionProposal extends AbstractMethodCorrectionProposa
 			return modifiers;
 		}
 		return Modifier.PUBLIC;
+	}
+
+	private int getExistingMemberModifiers(ASTNode targetTypeDecl, int modifier) {
+		if (targetTypeDecl instanceof TypeDeclaration) {
+			TypeDeclaration type= (TypeDeclaration) targetTypeDecl;
+			MethodDeclaration[] methodDecls= type.getMethods();
+			if (methodDecls.length > 0) {
+				if (type.isInterface() && modifier == Modifier.ABSTRACT) {
+					for (MethodDeclaration methodDeclaration : methodDecls) {
+						if (JdtFlags.isAbstract(methodDeclaration.resolveBinding()))
+							return methodDeclaration.getModifiers();
+					}
+				}
+				return methodDecls[0].getModifiers() & Modifier.PUBLIC;
+			}
+			FieldDeclaration[] fields= type.getFields();
+			if (fields.length > 0)
+				return (fields[0].getModifiers() & Modifier.PUBLIC);
+		}
+		return 0;
 	}
 
 	/* (non-Javadoc)
