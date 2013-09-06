@@ -514,6 +514,7 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 		copyReturnType(rewriter.getASTRewrite(), getDeclaringType().getCompilationUnit(), methodToCreateStubFor, newMethod, mapping);
 		copyParameters(rewriter.getASTRewrite(), getDeclaringType().getCompilationUnit(), methodToCreateStubFor, newMethod, mapping);
 		copyThrownExceptions(methodToCreateStubFor, newMethod);
+		updateReceiverParameter(getDestinationType(), methodToCreateStubFor, newMethod);
 		newMethod.setJavadoc(createJavadocForStub(typeToCreateStubIn.getName().getIdentifier(), methodToCreateStubFor, newMethod, newCu, rewriter.getASTRewrite()));
 		ImportRewriteContext context= new ContextSensitiveImportRewriteContext(typeToCreateStubIn, rewriter.getImportRewrite());
 		ImportRewriteUtil.addImports(rewriter, context, newMethod, new HashMap<Name, String>(), new HashMap<Name, String>(), false);
@@ -1037,6 +1038,7 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 		copyReturnType(targetRewrite.getASTRewrite(), getDeclaringType().getCompilationUnit(), oldMethod, newMethod, mapping);
 		copyParameters(targetRewrite.getASTRewrite(), getDeclaringType().getCompilationUnit(), oldMethod, newMethod, mapping);
 		copyThrownExceptions(oldMethod, newMethod);
+		updateReceiverParameter(getDestinationType(), oldMethod, newMethod);
 		ImportRewriteContext context= new ContextSensitiveImportRewriteContext(destination, targetRewrite.getImportRewrite());
 		ImportRewriteUtil.addImports(targetRewrite, context, newMethod, new HashMap<Name, String>(), new HashMap<Name, String>(), false);
 		targetRewrite.getASTRewrite().getListRewrite(destination, destination.getBodyDeclarationsProperty()).insertAt(newMethod, ASTNodes.getInsertionIndex(newMethod, destination.bodyDeclarations()), targetRewrite.createCategorizedGroupDescription(RefactoringCoreMessages.PullUpRefactoring_add_abstract_method, SET_PULL_UP));
@@ -1343,6 +1345,7 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 		copyParameters(rewrite, getDeclaringType().getCompilationUnit(), oldMethod, newMethod, mapping);
 		copyThrownExceptions(oldMethod, newMethod);
 		copyTypeParameters(oldMethod, newMethod);
+		updateReceiverParameter(getDestinationType(), oldMethod, newMethod);
 		return newMethod;
 	}
 

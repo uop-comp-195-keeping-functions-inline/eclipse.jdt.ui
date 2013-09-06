@@ -1,9 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * This is an implementation of an early-draft specification developed under the Java Community Process (JCP) and
+ * is made available for testing and evaluation purposes only.
+ * The code is not compatible with any specification of the JCP.
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
@@ -901,6 +905,7 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 					addInheritedTypeQualifications(declaration, targetRewrite, qualifierGroup);
 					addEnclosingInstanceDeclaration(declaration, rewrite);
 				}
+				updateConstructorReceiverParameter(declaration, rewrite);
 				fTypeImports= new HashSet<ITypeBinding>();
 				fStaticImports= new HashSet<IBinding>();
 				ImportRewriteUtil.collectImports(fType.getJavaProject(), declaration, fTypeImports, fStaticImports, false);
@@ -1392,6 +1397,26 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 		}
 	}
 
+	/**
+	 * Updates the receiver parameter properties of the constructor. The receiver parameter properties are set to <code>null</code>.
+	 * 
+	 * @param declaration the type declaration AST node
+	 * @param rewrite the ASTRewrite node used for the modification
+	 * @since 3.9 BETA_JAVA8
+	 */
+	private void updateConstructorReceiverParameter(AbstractTypeDeclaration declaration, final ASTRewrite rewrite) {
+		final MethodDeclaration[] declarations= getConstructorDeclarationNodes(declaration);
+		for (int index= 0; index < declarations.length; index++) {
+			MethodDeclaration methodDeclaration= declarations[index];
+			if (methodDeclaration.getReceiverType() != null) {
+				rewrite.set(methodDeclaration, MethodDeclaration.RECEIVER_TYPE_PROPERTY, null, null);
+				if (methodDeclaration.getReceiverQualifier() != null) {
+					rewrite.set(methodDeclaration, MethodDeclaration.RECEIVER_QUALIFIER_PROPERTY, null, null);
+				}
+			}
+		}
+	}
+	
 	private void modifyInterfaceMemberModifiers(final ITypeBinding binding) {
 		Assert.isNotNull(binding);
 		ITypeBinding declaring= binding.getDeclaringClass();
