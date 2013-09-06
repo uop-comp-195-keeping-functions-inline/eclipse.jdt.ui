@@ -509,7 +509,7 @@ public final class MoveStaticMembersProcessor extends MoveProcessor implements I
 		int flags= member.getFlags();
 		switch (member.getElementType()) {
 			case IJavaElement.FIELD:
-				if (Flags.isStatic(flags) && Flags.isFinal(flags))
+				if (!(Flags.isStatic(flags) && Flags.isFinal(flags)))
 					return false;
 				if (Flags.isEnum(flags))
 					return false;
@@ -958,7 +958,7 @@ public final class MoveStaticMembersProcessor extends MoveProcessor implements I
 					MethodDeclaration methodDecl= (MethodDeclaration) declaration;
 					int psModifiers= Modifier.PUBLIC | Modifier.STATIC;
 					if ((methodDecl.getModifiers() & psModifiers) != psModifiers) {
-						ModifierRewrite.create(fSource.getASTRewrite(), methodDecl).setModifiers(methodDecl.getModifiers() | psModifiers, null);						
+						ModifierRewrite.create(fSource.getASTRewrite(), methodDecl).setModifiers(methodDecl.getModifiers() | psModifiers, null);
 					}
 				}
 			}
