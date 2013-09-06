@@ -70,6 +70,7 @@ import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -730,5 +731,31 @@ public abstract class HierarchyProcessor extends SuperTypeRefactoringProcessor {
 		if (!references)
 			return true;
 		return hasNonMovedReferences(member, monitor, status);
+	}
+	
+	/**
+	 * Updates the receiver parameter properties of the new method.
+	 * 
+	 * @param type the new type where the new method will be placed
+	 * @param oldMethod the existing method from where the receiver parameter properties will be
+	 *            copied
+	 * @param newMethod the method whose receiver parameter properties will be updated
+	 * @since 3.9 BETA_JAVA8
+	 */
+	protected void updateReceiverParameter(IType type, MethodDeclaration oldMethod, MethodDeclaration newMethod) {
+		AST ast= newMethod.getAST();
+		String elementName= type.getElementName();
+		if (oldMethod.getReceiverType() != null) {
+			SimpleType simpleType= ast.newSimpleType(ast.newSimpleName(elementName));
+			Iterator<Annotation> iterator= oldMethod.getReceiverType().annotations().iterator();
+			while (iterator.hasNext()) {
+				Annotation annotation= iterator.next();
+				simpleType.annotations().add(ASTNode.copySubtree(ast, annotation));
+			}
+			newMethod.setReceiverType(simpleType);
+			if (oldMethod.getReceiverQualifier() != null) {
+				newMethod.setReceiverQualifier(ast.newSimpleName(elementName));
+			}
+		}
 	}
 }

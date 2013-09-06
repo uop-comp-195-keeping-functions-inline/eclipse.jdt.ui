@@ -658,7 +658,7 @@ public final class PushDownRefactoringProcessor extends HierarchyProcessor {
 						} else {
 							final MethodDeclaration oldMethod= ASTNodeSearchUtil.getMethodDeclarationNode((IMethod) infos[offset].getMember(), sourceRewriter.getRoot());
 							if (oldMethod != null) {
-								MethodDeclaration newMethod= createNewMethodDeclarationNode(infos[offset], mapping, unitRewriter, oldMethod);
+								MethodDeclaration newMethod= createNewMethodDeclarationNode(type, infos[offset], mapping, unitRewriter, oldMethod);
 								unitRewriter.getASTRewrite().getListRewrite(declaration, declaration.getBodyDeclarationsProperty()).insertAt(newMethod, ASTNodes.getInsertionIndex(newMethod, declaration.bodyDeclarations()), unitRewriter.createCategorizedGroupDescription(RefactoringCoreMessages.HierarchyRefactoring_add_member, SET_PUSH_DOWN));
 								ImportRewriteUtil.addImports(unitRewriter, context, oldMethod, new HashMap<Name, String>(), new HashMap<Name, String>(), false);
 							}
@@ -823,7 +823,7 @@ public final class PushDownRefactoringProcessor extends HierarchyProcessor {
 		return newField;
 	}
 
-	private MethodDeclaration createNewMethodDeclarationNode(MemberActionInfo info, TypeVariableMaplet[] mapping, CompilationUnitRewrite rewriter, MethodDeclaration oldMethod) throws JavaModelException {
+	private MethodDeclaration createNewMethodDeclarationNode(IType type, MemberActionInfo info, TypeVariableMaplet[] mapping, CompilationUnitRewrite rewriter, MethodDeclaration oldMethod) throws JavaModelException {
 		Assert.isTrue(!info.isFieldInfo());
 		IMethod method= (IMethod) info.getMember();
 		ASTRewrite rewrite= rewriter.getASTRewrite();
@@ -847,6 +847,7 @@ public final class PushDownRefactoringProcessor extends HierarchyProcessor {
 		copyParameters(rewrite, method.getCompilationUnit(), oldMethod, newMethod, mapping);
 		copyThrownExceptions(oldMethod, newMethod);
 		copyTypeParameters(oldMethod, newMethod);
+		updateReceiverParameter(type, oldMethod, newMethod);
 		return newMethod;
 	}
 

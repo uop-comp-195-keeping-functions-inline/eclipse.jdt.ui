@@ -1,10 +1,14 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * This is an implementation of an early-draft specification developed under the Java Community Process (JCP) and 
+ * is made available for testing and evaluation purposes only. 
+ * The code is not compatible with any specification of the JCP.
+ * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -69,6 +73,7 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.Assignment;
@@ -95,6 +100,7 @@ import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
@@ -2255,6 +2261,7 @@ public final class MoveInstanceMethodProcessor extends MoveProcessor implements 
 					adjustments.put(fMethod, adjustment);
 				}
 			}
+			updateReceiverParameter(declaration, rewrite);			
 			target= createMethodArguments(rewrites, rewrite, declaration, adjustments, status);
 			createMethodTypeParameters(rewrite, declaration, status);
 			createMethodComment(rewrite, declaration);
@@ -2264,6 +2271,25 @@ public final class MoveInstanceMethodProcessor extends MoveProcessor implements 
 				rewriter.clearImportRewrites();
 		}
 		return target;
+	}
+
+	private void updateReceiverParameter(final MethodDeclaration declaration, final ASTRewrite rewrite) throws JavaModelException {
+		if (declaration.getReceiverType() != null) {
+			IType targetType= getTargetType();
+			AST ast= rewrite.getAST();
+			SimpleName simpleName= ast.newSimpleName(targetType.getElementName());
+			SimpleType simpleType= ast.newSimpleType(simpleName);
+			Iterator<Annotation> iterator= declaration.getReceiverType().annotations().iterator();
+			while (iterator.hasNext()) {
+				Annotation annotation= iterator.next();
+				simpleType.annotations().add(rewrite.createCopyTarget(annotation));
+			}
+			rewrite.set(declaration, MethodDeclaration.RECEIVER_TYPE_PROPERTY, simpleType, null);
+			if (declaration.getReceiverQualifier() != null) {
+				SimpleName qualifierName= ast.newSimpleName(targetType.getElementName());
+				rewrite.set(declaration, MethodDeclaration.RECEIVER_QUALIFIER_PROPERTY, qualifierName, null);
+			}
+		}
 	}
 
 	/**

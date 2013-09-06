@@ -1,9 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * This is an implementation of an early-draft specification developed under the Java Community Process (JCP) and
+ * is made available for testing and evaluation purposes only.
+ * The code is not compatible with any specification of the JCP.
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
@@ -79,6 +83,8 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.ParameterizedType;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -699,6 +705,7 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 		if (fAbstract && !abstractFound)
 			rewriter.setModifiers(Modifier.ABSTRACT, 0, null);
 		
+		updateReceiverParameter(declaration, rewrite, targetDeclaration.getName().getIdentifier());
 		for (SingleVariableDeclaration param : (List<SingleVariableDeclaration>) declaration.parameters()) {
 			ListRewrite modifierRewrite= rewrite.getListRewrite(param, SingleVariableDeclaration.MODIFIERS2_PROPERTY);
 			for (IExtendedModifier extended : (List<IExtendedModifier>) param.modifiers()) {
@@ -728,6 +735,25 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 			}
 		} finally {
 			RefactoringFileBuffers.release(unit);
+		}
+	}
+	
+	private void updateReceiverParameter(final MethodDeclaration declaration, final ASTRewrite rewrite, final String targetName) {
+		if (declaration.getReceiverType() != null) {
+			AST ast= rewrite.getAST();
+			SimpleName simpleName= ast.newSimpleName(targetName);
+			SimpleType simpleType= ast.newSimpleType(simpleName);
+			Iterator<Annotation> iterator= declaration.getReceiverType().annotations().iterator();
+			while (iterator.hasNext()) {
+				Annotation annotation= iterator.next();
+				simpleType.annotations().add(rewrite.createCopyTarget(annotation));
+			}
+			rewrite.set(declaration, MethodDeclaration.RECEIVER_TYPE_PROPERTY, simpleType, null);
+
+			if (declaration.getReceiverQualifier() != null) {
+				SimpleName qualifierName= ast.newSimpleName(targetName);
+				rewrite.set(declaration, MethodDeclaration.RECEIVER_QUALIFIER_PROPERTY, qualifierName, null);
+			}
 		}
 	}
 

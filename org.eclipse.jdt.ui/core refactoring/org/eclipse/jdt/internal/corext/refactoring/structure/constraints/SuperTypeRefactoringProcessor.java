@@ -1,9 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * This is an implementation of an early-draft specification developed under the Java Community Process (JCP) and
+ * is made available for testing and evaluation purposes only.
+ * The code is not compatible with any specification of the JCP.
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
@@ -71,6 +75,7 @@ import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeParameter;
@@ -846,86 +851,90 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 		final CompilationUnit target= rewrite.getRoot();
 		node= NodeFinder.perform(copy, range.getSourceRange());
 		if (node != null) {
-			node= ASTNodes.getNormalizedNode(node).getParent();
-			if (node instanceof VariableDeclaration) {
-				binding= ((VariableDeclaration) node).resolveBinding();
-				node= target.findDeclaringNode(binding.getKey());
-				if (node instanceof SingleVariableDeclaration) {
-					rewriteTypeOccurrence(estimate, rewrite, ((SingleVariableDeclaration) node).getType(), group);
-					if (node.getParent() instanceof MethodDeclaration) {
-						binding= ((VariableDeclaration) node).resolveBinding();
-						if (binding != null)
-							replacements.add(binding.getKey());
-					}
-				}
-			} else if (node instanceof VariableDeclarationStatement) {
-				binding= ((VariableDeclaration) ((VariableDeclarationStatement) node).fragments().get(0)).resolveBinding();
-				node= target.findDeclaringNode(binding.getKey());
-				if (node instanceof VariableDeclarationFragment)
-					rewriteTypeOccurrence(estimate, rewrite, ((VariableDeclarationStatement) ((VariableDeclarationFragment) node).getParent()).getType(), group);
-			} else if (node instanceof MethodDeclaration) {
-				binding= ((MethodDeclaration) node).resolveBinding();
-				node= target.findDeclaringNode(binding.getKey());
-				if (node instanceof MethodDeclaration)
-					rewriteTypeOccurrence(estimate, rewrite, ((MethodDeclaration) node).getReturnType2(), group);
-			} else if (node instanceof FieldDeclaration) {
-				binding= ((VariableDeclaration) ((FieldDeclaration) node).fragments().get(0)).resolveBinding();
-				node= target.findDeclaringNode(binding.getKey());
-				if (node instanceof VariableDeclarationFragment) {
-					node= node.getParent();
-					if (node instanceof FieldDeclaration)
-						rewriteTypeOccurrence(estimate, rewrite, ((FieldDeclaration) node).getType(), group);
-				}
-			} else if (node instanceof ArrayType) {
-				final ASTNode type= node;
-				while (node != null && !(node instanceof MethodDeclaration) && !(node instanceof VariableDeclarationFragment))
-					node= node.getParent();
-				if (node != null) {
-					final int delta= node.getStartPosition() + node.getLength() - type.getStartPosition();
-					if (node instanceof MethodDeclaration)
-						binding= ((MethodDeclaration) node).resolveBinding();
-					else if (node instanceof VariableDeclarationFragment)
-						binding= ((VariableDeclarationFragment) node).resolveBinding();
-					if (binding != null) {
-						node= target.findDeclaringNode(binding.getKey());
-						if (node instanceof MethodDeclaration || node instanceof VariableDeclarationFragment) {
-							node= NodeFinder.perform(target, (node.getStartPosition() + node.getLength() - delta), 0);
-							if (node instanceof SimpleName)
-								rewriteTypeOccurrence(estimate, rewrite, node, group);
+			ASTNode normalizedNode= ASTNodes.getNormalizedNode(node);
+			if (normalizedNode != null) {
+				StructuralPropertyDescriptor locationInParent= normalizedNode.getLocationInParent();
+				node= normalizedNode.getParent();
+				if (node instanceof VariableDeclaration) {
+					binding= ((VariableDeclaration) node).resolveBinding();
+					node= target.findDeclaringNode(binding.getKey());
+					if (node instanceof SingleVariableDeclaration) {
+						rewriteTypeOccurrence(estimate, rewrite, ((SingleVariableDeclaration) node).getType(), group);
+						if (node.getParent() instanceof MethodDeclaration) {
+							binding= ((VariableDeclaration) node).resolveBinding();
+							if (binding != null)
+								replacements.add(binding.getKey());
 						}
 					}
-				}
-			} else if (node instanceof QualifiedName) {
-				final ASTNode name= node;
-				while (node != null && !(node instanceof MethodDeclaration) && !(node instanceof VariableDeclarationFragment))
-					node= node.getParent();
-				if (node != null) {
-					final int delta= node.getStartPosition() + node.getLength() - name.getStartPosition();
-					if (node instanceof MethodDeclaration)
-						binding= ((MethodDeclaration) node).resolveBinding();
-					else if (node instanceof VariableDeclarationFragment)
-						binding= ((VariableDeclarationFragment) node).resolveBinding();
-					if (binding != null) {
-						node= target.findDeclaringNode(binding.getKey());
-						if (node instanceof SimpleName || node instanceof MethodDeclaration || node instanceof VariableDeclarationFragment) {
-							node= NodeFinder.perform(target, (node.getStartPosition() + node.getLength() - delta), 0);
-							if (node instanceof SimpleName)
-								rewriteTypeOccurrence(estimate, rewrite, node, group);
-						}
-					}
-				}
-			} else if (node instanceof CastExpression) {
-				final ASTNode expression= node;
-				while (node != null && !(node instanceof MethodDeclaration))
-					node= node.getParent();
-				if (node != null) {
-					final int delta= node.getStartPosition() + node.getLength() - expression.getStartPosition();
+				} else if (node instanceof VariableDeclarationStatement) {
+					binding= ((VariableDeclaration) ((VariableDeclarationStatement) node).fragments().get(0)).resolveBinding();
+					node= target.findDeclaringNode(binding.getKey());
+					if (node instanceof VariableDeclarationFragment)
+						rewriteTypeOccurrence(estimate, rewrite, ((VariableDeclarationStatement) ((VariableDeclarationFragment) node).getParent()).getType(), group);
+				} else if (node instanceof MethodDeclaration && MethodDeclaration.RETURN_TYPE2_PROPERTY.equals(locationInParent)) {
 					binding= ((MethodDeclaration) node).resolveBinding();
 					node= target.findDeclaringNode(binding.getKey());
-					if (node instanceof MethodDeclaration) {
-						node= NodeFinder.perform(target, (node.getStartPosition() + node.getLength() - delta), 0);
-						if (node instanceof CastExpression)
-							rewriteTypeOccurrence(estimate, rewrite, ((CastExpression) node).getType(), group);
+					if (node instanceof MethodDeclaration)
+						rewriteTypeOccurrence(estimate, rewrite, ((MethodDeclaration) node).getReturnType2(), group);
+				} else if (node instanceof FieldDeclaration) {
+					binding= ((VariableDeclaration) ((FieldDeclaration) node).fragments().get(0)).resolveBinding();
+					node= target.findDeclaringNode(binding.getKey());
+					if (node instanceof VariableDeclarationFragment) {
+						node= node.getParent();
+						if (node instanceof FieldDeclaration)
+							rewriteTypeOccurrence(estimate, rewrite, ((FieldDeclaration) node).getType(), group);
+					}
+				} else if (node instanceof ArrayType) {
+					final ASTNode type= node;
+					while (node != null && !(node instanceof MethodDeclaration) && !(node instanceof VariableDeclarationFragment))
+						node= node.getParent();
+					if (node != null) {
+						final int delta= node.getStartPosition() + node.getLength() - type.getStartPosition();
+						if (node instanceof MethodDeclaration)
+							binding= ((MethodDeclaration) node).resolveBinding();
+						else if (node instanceof VariableDeclarationFragment)
+							binding= ((VariableDeclarationFragment) node).resolveBinding();
+						if (binding != null) {
+							node= target.findDeclaringNode(binding.getKey());
+							if (node instanceof MethodDeclaration || node instanceof VariableDeclarationFragment) {
+								node= NodeFinder.perform(target, (node.getStartPosition() + node.getLength() - delta), 0);
+								if (node instanceof SimpleName)
+									rewriteTypeOccurrence(estimate, rewrite, node, group);
+							}
+						}
+					}
+				} else if (node instanceof QualifiedName) {
+					final ASTNode name= node;
+					while (node != null && !(node instanceof MethodDeclaration) && !(node instanceof VariableDeclarationFragment))
+						node= node.getParent();
+					if (node != null) {
+						final int delta= node.getStartPosition() + node.getLength() - name.getStartPosition();
+						if (node instanceof MethodDeclaration)
+							binding= ((MethodDeclaration) node).resolveBinding();
+						else if (node instanceof VariableDeclarationFragment)
+							binding= ((VariableDeclarationFragment) node).resolveBinding();
+						if (binding != null) {
+							node= target.findDeclaringNode(binding.getKey());
+							if (node instanceof SimpleName || node instanceof MethodDeclaration || node instanceof VariableDeclarationFragment) {
+								node= NodeFinder.perform(target, (node.getStartPosition() + node.getLength() - delta), 0);
+								if (node instanceof SimpleName)
+									rewriteTypeOccurrence(estimate, rewrite, node, group);
+							}
+						}
+					}
+				} else if (node instanceof CastExpression) {
+					final ASTNode expression= node;
+					while (node != null && !(node instanceof MethodDeclaration))
+						node= node.getParent();
+					if (node != null) {
+						final int delta= node.getStartPosition() + node.getLength() - expression.getStartPosition();
+						binding= ((MethodDeclaration) node).resolveBinding();
+						node= target.findDeclaringNode(binding.getKey());
+						if (node instanceof MethodDeclaration) {
+							node= NodeFinder.perform(target, (node.getStartPosition() + node.getLength() - delta), 0);
+							if (node instanceof CastExpression)
+								rewriteTypeOccurrence(estimate, rewrite, ((CastExpression) node).getType(), group);
+						}
 					}
 				}
 			}
