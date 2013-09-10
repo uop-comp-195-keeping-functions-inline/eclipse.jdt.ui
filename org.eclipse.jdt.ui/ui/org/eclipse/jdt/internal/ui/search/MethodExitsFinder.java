@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
@@ -203,34 +202,32 @@ public class MethodExitsFinder extends ASTVisitor implements IOccurrencesFinder 
 		}
 		node.getBody().accept(this);
 
-		if (node.getAST().apiLevel() >= AST.JLS4) {
-			List<VariableDeclarationExpression> resources= node.resources();
-			for (Iterator<VariableDeclarationExpression> iterator= resources.iterator(); iterator.hasNext();) {
-				iterator.next().accept(this);
-			}
+		List<VariableDeclarationExpression> resources= node.resources();
+		for (Iterator<VariableDeclarationExpression> iterator= resources.iterator(); iterator.hasNext();) {
+			iterator.next().accept(this);
+		}
 
-			//check if the method could exit as a result of resource#close()
-			boolean exitMarked= false;
-			for (VariableDeclarationExpression variable : resources) {
-				Type type= variable.getType();
-				IMethodBinding methodBinding= Bindings.findMethodInHierarchy(type.resolveBinding(), "close", new ITypeBinding[0]); //$NON-NLS-1$
-				if (methodBinding != null) {
-					ITypeBinding[] exceptionTypes= methodBinding.getExceptionTypes();
-					for (int j= 0; j < exceptionTypes.length; j++) {
-						if (isExitPoint(exceptionTypes[j])) { // a close() throws an uncaught exception
-							// mark name of resource
-							for (VariableDeclarationFragment fragment : (List<VariableDeclarationFragment>) variable.fragments()) {
-								SimpleName name= fragment.getName();
-								fResult.add(new OccurrenceLocation(name.getStartPosition(), name.getLength(), 0, fExitDescription));
-							}
-							if (!exitMarked) {
-								// mark exit position
-								exitMarked= true;
-								Block body= node.getBody();
-								int offset= body.getStartPosition() + body.getLength() - 1; // closing bracket of try block
-								fResult.add(new OccurrenceLocation(offset, 1, 0, Messages.format(SearchMessages.MethodExitsFinder_occurrence_exit_impclict_close_description,
-										BasicElementLabels.getJavaElementName(fMethodDeclaration.getName().toString()))));
-							}
+		//check if the method could exit as a result of resource#close()
+		boolean exitMarked= false;
+		for (VariableDeclarationExpression variable : resources) {
+			Type type= variable.getType();
+			IMethodBinding methodBinding= Bindings.findMethodInHierarchy(type.resolveBinding(), "close", new ITypeBinding[0]); //$NON-NLS-1$
+			if (methodBinding != null) {
+				ITypeBinding[] exceptionTypes= methodBinding.getExceptionTypes();
+				for (int j= 0; j < exceptionTypes.length; j++) {
+					if (isExitPoint(exceptionTypes[j])) { // a close() throws an uncaught exception
+						// mark name of resource
+						for (VariableDeclarationFragment fragment : (List<VariableDeclarationFragment>) variable.fragments()) {
+							SimpleName name= fragment.getName();
+							fResult.add(new OccurrenceLocation(name.getStartPosition(), name.getLength(), 0, fExitDescription));
+						}
+						if (!exitMarked) {
+							// mark exit position
+							exitMarked= true;
+							Block body= node.getBody();
+							int offset= body.getStartPosition() + body.getLength() - 1; // closing bracket of try block
+							fResult.add(new OccurrenceLocation(offset, 1, 0, Messages.format(SearchMessages.MethodExitsFinder_occurrence_exit_impclict_close_description,
+									BasicElementLabels.getJavaElementName(fMethodDeclaration.getName().toString()))));
 						}
 					}
 				}

@@ -399,6 +399,11 @@ public class ASTNodes {
 				return false;
 			}
 			@Override
+			public boolean visit(QualifiedType node) {
+				buffer.append(node.getName().getIdentifier());
+				return false;
+			}
+			@Override
 			public void endVisit(ArrayType node) {
 				buffer.append("[]"); //$NON-NLS-1$
 			}
@@ -881,6 +886,14 @@ public class ASTNodes {
 		return result[0];
 	}
 
+	/**
+	 * Returns the topmost ancestor of <code>name</code> that is still a {@link Name}.
+	 * <p>
+	 * <b>Note:</b> The returned node may resolve to a different binding than the given <code>name</code>!
+	 * 
+	 * @param name a name node
+	 * @return the topmost name
+	 */
 	public static Name getTopMostName(Name name) {
 		Name result= name;
 		while(result.getParent() instanceof Name) {
@@ -889,6 +902,14 @@ public class ASTNodes {
 		return result;
 	}
 
+	/**
+	 * Returns the topmost ancestor of <code>type</code> that is still a {@link Type}.
+	 * <p>
+	 * <b>Note:</b> The returned node may resolve to a different binding than the given <code>type</code>!
+	 * 
+	 * @param type a type node
+	 * @return the topmost type
+	 */
 	public static Type getTopMostType(Type type) {
 		Type result= type;
 		while(result.getParent() instanceof Type) {

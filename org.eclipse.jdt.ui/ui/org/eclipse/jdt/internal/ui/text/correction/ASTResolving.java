@@ -53,6 +53,7 @@ import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.InstanceofExpression;
+import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MemberValuePair;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -695,19 +696,17 @@ public class ASTResolving {
 	}
 
 	/**
-	 * Returns the method binding of the node's parent method declaration or <code>null</code> if
-	 * the node is not inside a method.
+	 * The node's enclosing method declaration or <code>null</code> if
+	 * the node is not inside a method and is not a method itself.
 	 * 
-	 * @param node the ast node
-	 * @return the method binding of the node's parent method declaration or <code>null</code> if
-	 *         the node
+	 * @param node a node
+	 * @return the enclosing method declaration or <code>null</code>
 	 */
 	public static MethodDeclaration findParentMethodDeclaration(ASTNode node) {
 		while (node != null) {
-			if (node.getNodeType() == ASTNode.METHOD_DECLARATION) {
+			if (node instanceof MethodDeclaration) {
 				return (MethodDeclaration) node;
-			}
-			if (node instanceof AbstractTypeDeclaration || node instanceof AnonymousClassDeclaration) {
+			} else if (node instanceof BodyDeclaration || node instanceof AnonymousClassDeclaration || node instanceof LambdaExpression) {
 				return null;
 			}
 			node= node.getParent();
