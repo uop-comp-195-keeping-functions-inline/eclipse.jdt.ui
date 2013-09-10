@@ -856,7 +856,7 @@ public class ASTFlattener extends GenericVisitor {
 		node.getBody().accept(this);
 		return false;
 	}
-
+	
 	/*
 	 * @see ASTVisitor#visit(LineComment)
 	 * @since 3.0
@@ -1286,9 +1286,7 @@ public class ASTFlattener extends GenericVisitor {
 	 */
 	@Override
 	public boolean visit(SingleVariableDeclaration node) {
-		if (node.getAST().apiLevel() >= JLS3) {
-			printModifiers(node.modifiers());
-		}
+		printModifiers(node.modifiers());
 		node.getType().accept(this);
 		if (node.getAST().apiLevel() >= JLS3) {
 			if (node.isVarargs()) {
@@ -1563,8 +1561,8 @@ public class ASTFlattener extends GenericVisitor {
 						this.fBuffer.append(",");//$NON-NLS-1$
 					}
 				}
-				this.fBuffer.append(") ");//$NON-NLS-1$
 			}
+			this.fBuffer.append(") ");//$NON-NLS-1$
 		}
 		node.getBody().accept(this);
 		this.fBuffer.append(" ");//$NON-NLS-1$
