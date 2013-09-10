@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnnotatableType;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnnotationTypeMemberDeclaration;
@@ -52,6 +53,7 @@ import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.ExtraDimension;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ForStatement;
@@ -63,6 +65,7 @@ import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.InstanceofExpression;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.LabeledStatement;
+import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.LineComment;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MemberRef;
@@ -72,6 +75,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.MethodRef;
 import org.eclipse.jdt.core.dom.MethodRefParameter;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
@@ -107,6 +111,7 @@ import org.eclipse.jdt.core.dom.TypeDeclarationStatement;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.UnionType;
+import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
@@ -179,6 +184,18 @@ public class ASTFlattener extends GenericVisitor {
 			ASTNode p= (ASTNode) it.next();
 			p.accept(this);
 			this.fBuffer.append(" ");//$NON-NLS-1$
+		}
+	}
+
+	void printTypeAnnotations(AnnotatableType node) {
+		printAnnotationsList(node.annotations());
+	}
+
+	void printAnnotationsList(List<? extends Annotation> annotations) {
+		for (Iterator<? extends Annotation> it = annotations.iterator(); it.hasNext(); ) {
+			Annotation annotation = it.next();
+			annotation.accept(this);
+			this.fBuffer.append(' ');
 		}
 	}
 
@@ -302,6 +319,7 @@ public class ASTFlattener extends GenericVisitor {
 	@Override
 	public boolean visit(ArrayType node) {
 		node.getComponentType().accept(this);
+		printTypeAnnotations(node);
 		this.fBuffer.append("[]");//$NON-NLS-1$
 		return false;
 	}
@@ -653,6 +671,17 @@ public class ASTFlattener extends GenericVisitor {
 	}
 
 	/*
+	 * @see ASTVisitor#visit(ExtraDimension)
+	 */
+	@Override
+	public boolean visit(ExtraDimension node) {
+		this.fBuffer.append(" ");//$NON-NLS-1$
+		printAnnotationsList(node.annotations());
+		this.fBuffer.append("[]"); //$NON-NLS-1$
+		return false;
+	}
+
+	/*
 	 * @see ASTVisitor#visit(FieldAccess)
 	 */
 	@Override
@@ -820,6 +849,28 @@ public class ASTFlattener extends GenericVisitor {
 	}
 
 	/*
+	 * @see ASTVisitor#visit(LambdaExpression)
+	 */
+	@Override
+	public boolean visit(LambdaExpression node) {
+		boolean hasParentheses= node.hasParentheses();
+		if (hasParentheses)
+			this.fBuffer.append('(');
+		for (Iterator<? extends VariableDeclaration> it= node.parameters().iterator(); it.hasNext(); ) {
+			VariableDeclaration v= it.next();
+			v.accept(this);
+			if (it.hasNext()) {
+				this.fBuffer.append(",");//$NON-NLS-1$
+			}
+		}
+		if (hasParentheses)
+			this.fBuffer.append(')');
+		this.fBuffer.append(" -> "); //$NON-NLS-1$
+		node.getBody().accept(this);
+		return false;
+	}
+
+	/*
 	 * @see ASTVisitor#visit(LineComment)
 	 * @since 3.0
 	 */
@@ -941,6 +992,20 @@ public class ASTFlattener extends GenericVisitor {
 		}
 		node.getName().accept(this);
 		this.fBuffer.append("(");//$NON-NLS-1$
+		AnnotatableType receiverType= node.getReceiverType();
+		if (receiverType != null) {
+			receiverType.accept(this);
+			this.fBuffer.append(' ');
+			SimpleName qualifier= node.getReceiverQualifier();
+			if (qualifier != null) {
+				qualifier.accept(this);
+				this.fBuffer.append('.');
+			}
+			this.fBuffer.append("this"); //$NON-NLS-1$
+			if (node.parameters().size() > 0) {
+				this.fBuffer.append(',');
+			}
+		}
 		for (Iterator<SingleVariableDeclaration> it= node.parameters().iterator(); it.hasNext();) {
 			SingleVariableDeclaration v= it.next();
 			v.accept(this);
@@ -949,14 +1014,17 @@ public class ASTFlattener extends GenericVisitor {
 			}
 		}
 		this.fBuffer.append(")");//$NON-NLS-1$
-		for (int i= 0; i < node.getExtraDimensions(); i++) {
-			this.fBuffer.append("[]"); //$NON-NLS-1$
+		List<ExtraDimension> dimensions = node.extraDimensions();
+		for (Iterator<ExtraDimension> it= dimensions.iterator(); it.hasNext(); ) {
+			ExtraDimension e= it.next();
+			e.accept(this);
 		}
-		if (!node.thrownExceptionTypes().isEmpty()) {
+
+		if (!node.thrownExceptionTypes().isEmpty()) {		
 			this.fBuffer.append(" throws ");//$NON-NLS-1$
-			for (Iterator<Type> it= node.thrownExceptionTypes().iterator(); it.hasNext();) {
-				Type t= it.next();
-				t.accept(this);
+			for (Iterator<Type> it= node.thrownExceptionTypes().iterator(); it.hasNext(); ) {
+				Type n = it.next();
+				n.accept(this);
 				if (it.hasNext()) {
 					this.fBuffer.append(", ");//$NON-NLS-1$
 				}
@@ -1130,6 +1198,7 @@ public class ASTFlattener extends GenericVisitor {
 	 */
 	@Override
 	public boolean visit(PrimitiveType node) {
+		printTypeAnnotations(node);
 		this.fBuffer.append(node.getPrimitiveTypeCode().toString());
 		return false;
 	}
@@ -1153,6 +1222,7 @@ public class ASTFlattener extends GenericVisitor {
 	public boolean visit(QualifiedType node) {
 		node.getQualifier().accept(this);
 		this.fBuffer.append(".");//$NON-NLS-1$
+		printTypeAnnotations(node);
 		node.getName().accept(this);
 		return false;
 	}
@@ -1185,7 +1255,18 @@ public class ASTFlattener extends GenericVisitor {
 	 */
 	@Override
 	public boolean visit(SimpleType node) {
-		return true;
+		Name name= node.getName();
+		if (name.isQualifiedName()) {
+			QualifiedName qualifiedName= (QualifiedName) name;
+			qualifiedName.getQualifier().accept(this);
+			this.fBuffer.append(".");//$NON-NLS-1$
+			printTypeAnnotations(node);
+			qualifiedName.getName().accept(this);
+		} else {
+			printTypeAnnotations(node);
+			node.getName().accept(this);
+		}
+		return false;
 	}
 
 	/*
@@ -1207,19 +1288,20 @@ public class ASTFlattener extends GenericVisitor {
 	 */
 	@Override
 	public boolean visit(SingleVariableDeclaration node) {
-		if (node.getAST().apiLevel() >= JLS3) {
-			printModifiers(node.modifiers());
-		}
+		printModifiers(node.modifiers());
 		node.getType().accept(this);
-		if (node.getAST().apiLevel() >= JLS3) {
-			if (node.isVarargs()) {
-				this.fBuffer.append("...");//$NON-NLS-1$
-			}
+		if (node.isVarargs()) {
+			List<Annotation> annotations= node.varargsAnnotations();
+			this.fBuffer.append(' ');
+			printAnnotationsList(annotations);
+			this.fBuffer.append("...");//$NON-NLS-1$
 		}
 		this.fBuffer.append(" ");//$NON-NLS-1$
 		node.getName().accept(this);
-		for (int i= 0; i < node.getExtraDimensions(); i++) {
-			this.fBuffer.append("[]"); //$NON-NLS-1$
+		List<ExtraDimension> dimensions = node.extraDimensions();
+		for (Iterator<ExtraDimension> it= dimensions.iterator(); it.hasNext(); ) {
+			ExtraDimension e= it.next();
+			e.accept(this);
 		}
 		if (node.getInitializer() != null) {
 			this.fBuffer.append("=");//$NON-NLS-1$
@@ -1446,18 +1528,16 @@ public class ASTFlattener extends GenericVisitor {
 	@Override
 	public boolean visit(TryStatement node) {
 		this.fBuffer.append("try ");//$NON-NLS-1$
-		if (node.getAST().apiLevel() >= AST.JLS4) {
-			if (!node.resources().isEmpty()) {
-				this.fBuffer.append("(");//$NON-NLS-1$
-				for (Iterator<VariableDeclarationExpression> it= node.resources().iterator(); it.hasNext();) {
-					VariableDeclarationExpression var= it.next();
-					var.accept(this);
-					if (it.hasNext()) {
-						this.fBuffer.append(",");//$NON-NLS-1$
-					}
+		if (!node.resources().isEmpty()) {
+			this.fBuffer.append("(");//$NON-NLS-1$
+			for (Iterator<VariableDeclarationExpression> it= node.resources().iterator(); it.hasNext();) {
+				VariableDeclarationExpression var= it.next();
+				var.accept(this);
+				if (it.hasNext()) {
+					this.fBuffer.append(",");//$NON-NLS-1$
 				}
-				this.fBuffer.append(") ");//$NON-NLS-1$
 			}
+			this.fBuffer.append(") ");//$NON-NLS-1$
 		}
 		node.getBody().accept(this);
 		this.fBuffer.append(" ");//$NON-NLS-1$
@@ -1566,6 +1646,7 @@ public class ASTFlattener extends GenericVisitor {
 	 */
 	@Override
 	public boolean visit(TypeParameter node) {
+		printAnnotationsList(node.annotations());
 		node.getName().accept(this);
 		if (!node.typeBounds().isEmpty()) {
 			this.fBuffer.append(" extends ");//$NON-NLS-1$
@@ -1621,8 +1702,9 @@ public class ASTFlattener extends GenericVisitor {
 	@Override
 	public boolean visit(VariableDeclarationFragment node) {
 		node.getName().accept(this);
-		for (int i= 0; i < node.getExtraDimensions(); i++) {
-			this.fBuffer.append("[]");//$NON-NLS-1$
+		for (Iterator<ExtraDimension> it= node.extraDimensions().iterator(); it.hasNext(); ) {
+			ExtraDimension e= it.next();
+			e.accept(this);
 		}
 		if (node.getInitializer() != null) {
 			this.fBuffer.append("=");//$NON-NLS-1$
@@ -1658,6 +1740,7 @@ public class ASTFlattener extends GenericVisitor {
 	 */
 	@Override
 	public boolean visit(WildcardType node) {
+		printTypeAnnotations(node);
 		this.fBuffer.append("?");//$NON-NLS-1$
 		Type bound= node.getBound();
 		if (bound != null) {
