@@ -6656,9 +6656,14 @@
             runAfter="org.eclipse.jdt.ui.cleanup.potential_programming_problems">
       </cleanUp>
       <cleanUp
+            class="org.eclipse.jdt.internal.ui.fix.TypeParametersCleanUp"
+            id="org.eclipse.jdt.ui.cleanup.type_parameters"
+            runAfter="org.eclipse.jdt.ui.cleanup.unnecessary_code">
+      </cleanUp>
+      <cleanUp
             class="org.eclipse.jdt.internal.ui.fix.StringCleanUp"
             id="org.eclipse.jdt.ui.cleanup.strings"
-            runAfter="org.eclipse.jdt.ui.cleanup.unnecessary_code">
+            runAfter="org.eclipse.jdt.ui.cleanup.type_parameters">
       </cleanUp>
       <cleanUp
             class="org.eclipse.jdt.internal.ui.fix.UnimplementedCodeCleanUp"

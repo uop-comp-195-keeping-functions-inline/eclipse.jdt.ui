@@ -94,6 +94,10 @@ public class CleanUpMessages extends NLS {
 	public static String MissingCodeTabPage_RadioName_AddDefaultSUID;
 	public static String MissingCodeTabPage_RadioName_AddGeneratedSUID;
 
+	public static String UnnecessaryCodeTabPage_RadioName_InsertRedundantTypeArguments;
+
+	public static String UnnecessaryCodeTabPage_RadioName_RemoveRedundantTypeArguments;
+
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnnecessaryCasts;
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnnecessaryNLSTags;
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedConstructors;
@@ -103,6 +107,10 @@ public class CleanUpMessages extends NLS {
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedMembers;
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedMethods;
 	public static String UnnecessaryCodeTabPage_CheckboxName_UnusedTypes;
+
+	public static String UnnecessaryCodeTabPage_CheckboxName_UseTypeArguments;
+	public static String UnnecessaryCodeTabPage_GroupName_GenericTypes;
+
 	public static String UnnecessaryCodeTabPage_GroupName_UnnecessaryCode;
 	public static String UnnecessaryCodeTabPage_GroupName_UnusedCode;
 

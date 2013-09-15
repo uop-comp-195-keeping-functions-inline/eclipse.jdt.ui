@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -65,6 +65,18 @@ public final class UnnecessaryCodeTabPage extends AbstractCleanUpTabPage {
 
     	CheckboxPreference nls= createCheckboxPref(unnecessaryGroup, numColumns, CleanUpMessages.UnnecessaryCodeTabPage_CheckboxName_UnnecessaryNLSTags, CleanUpConstants.REMOVE_UNNECESSARY_NLS_TAGS, CleanUpModifyDialog.FALSE_TRUE);
     	registerPreference(nls);
+
+		Group redundantTypeArgumentsGroup= createGroup(numColumns, composite, CleanUpMessages.UnnecessaryCodeTabPage_GroupName_GenericTypes);
+
+		CheckboxPreference useTypeArguments= createCheckboxPref(redundantTypeArgumentsGroup, numColumns, CleanUpMessages.UnnecessaryCodeTabPage_CheckboxName_UseTypeArguments,
+				CleanUpConstants.USE_TYPE_ARGUMENTS, CleanUpModifyDialog.FALSE_TRUE);
+		intent(redundantTypeArgumentsGroup);
+		final RadioPreference useParenthesesNeverPref= createRadioPref(redundantTypeArgumentsGroup, 1, CleanUpMessages.UnnecessaryCodeTabPage_RadioName_InsertRedundantTypeArguments,
+				CleanUpConstants.INSERT_INFERRED_TYPE_ARGUMENTS, CleanUpModifyDialog.FALSE_TRUE);
+		final RadioPreference useParenthesesAlwaysPref= createRadioPref(redundantTypeArgumentsGroup, 1, CleanUpMessages.UnnecessaryCodeTabPage_RadioName_RemoveRedundantTypeArguments,
+				CleanUpConstants.REMOVE_REDUNDANT_TYPE_ARGUMENTS, CleanUpModifyDialog.FALSE_TRUE);
+		registerSlavePreference(useTypeArguments, new RadioPreference[] { useParenthesesAlwaysPref, useParenthesesNeverPref });
+
     }
 
 }
