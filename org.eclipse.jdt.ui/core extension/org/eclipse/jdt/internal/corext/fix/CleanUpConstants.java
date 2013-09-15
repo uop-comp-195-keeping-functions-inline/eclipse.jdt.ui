@@ -830,6 +830,53 @@ public class CleanUpConstants {
 	public static final String REMOVE_UNNECESSARY_NLS_TAGS= "cleanup.remove_unnecessary_nls_tags"; //$NON-NLS-1$
 
 	/**
+	 * Controls the usage of type arguments. For detailed settings use<br>
+	 * {@link #INSERT_INFERRED_TYPE_ARGUMENTS}<br>
+	 * {@link #REMOVE_REDUNDANT_TYPE_ARGUMENTS}<br>
+	 * <br>
+	 * <br>
+	 * Possible values: {TRUE, FALSE}<br>
+	 * 
+	 * <br>
+	 * 
+	 * @see CleanUpOptions#TRUE
+	 * @see CleanUpOptions#FALSE
+	 * @since 4.4
+	 */
+	public static final String USE_TYPE_ARGUMENTS= "cleanup.use_type_arguments"; //$NON-NLS-1$
+
+	/**
+	 * Insert redundant type arguments. <br>
+	 * <br>
+	 * Only has an effect if {@link #USE_TYPE_ARGUMENTS} is TRUE <br>
+	 * <br>
+	 * Possible values: {TRUE, FALSE}<br>
+	 * 
+	 * <br>
+	 * 
+	 * @see CleanUpOptions#TRUE
+	 * @see CleanUpOptions#FALSE
+	 * @since 4.4
+	 */
+	public static final String INSERT_INFERRED_TYPE_ARGUMENTS= "cleanup.insert_inferred_type_arguments"; //$NON-NLS-1$
+
+	/**
+	 * Removes redundant type arguments. <br>
+	 * <br>
+	 * Only has an effect if {@link #USE_TYPE_ARGUMENTS} is TRUE <br>
+	 * <br>
+	 * Possible values: {TRUE, FALSE}<br>
+	 * 
+	 * <br>
+	 * 
+	 * @see CleanUpOptions#TRUE
+	 * @see CleanUpOptions#FALSE
+	 * @since 4.4
+	 */
+	public static final String REMOVE_REDUNDANT_TYPE_ARGUMENTS= "cleanup.remove_redundant_type_arguments"; //$NON-NLS-1$
+
+
+	/**
 	 * Controls whether missing annotations should be added to the code. For detailed settings use:<br>
 	 * {@link #ADD_MISSING_ANNOTATIONS_DEPRECATED}<br> {@value #ADD_MISSING_ANNOTATIONS_OVERRIDE} <br>
 	 * <br>
@@ -1189,6 +1236,9 @@ public class CleanUpConstants {
 		//Unnecessary Code
 		options.setOption(REMOVE_UNNECESSARY_CASTS, CleanUpOptions.TRUE);
 		options.setOption(REMOVE_UNNECESSARY_NLS_TAGS, CleanUpOptions.TRUE);
+		options.setOption(USE_TYPE_ARGUMENTS, CleanUpOptions.FALSE);
+		options.setOption(INSERT_INFERRED_TYPE_ARGUMENTS, CleanUpOptions.FALSE);
+		options.setOption(REMOVE_REDUNDANT_TYPE_ARGUMENTS, CleanUpOptions.TRUE);
 
 		//Missing Code
 		options.setOption(ADD_MISSING_ANNOTATIONS, CleanUpOptions.TRUE);
@@ -1274,6 +1324,9 @@ public class CleanUpConstants {
 		//Unnecessary Code
 		options.setOption(REMOVE_UNNECESSARY_CASTS, CleanUpOptions.TRUE);
 		options.setOption(REMOVE_UNNECESSARY_NLS_TAGS, CleanUpOptions.FALSE);
+		options.setOption(USE_TYPE_ARGUMENTS, CleanUpOptions.FALSE);
+		options.setOption(INSERT_INFERRED_TYPE_ARGUMENTS, CleanUpOptions.FALSE);
+		options.setOption(REMOVE_REDUNDANT_TYPE_ARGUMENTS, CleanUpOptions.TRUE);
 
 		//Missing Code
 		options.setOption(ADD_MISSING_ANNOTATIONS, CleanUpOptions.TRUE);

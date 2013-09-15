@@ -84,6 +84,7 @@ public class MultiFixMessages extends NLS {
 
 	public static String UnimplementedCodeCleanUp_AddUnimplementedMethods_description;
 	public static String UnimplementedCodeCleanUp_MakeAbstract_description;
+	public static String UnnecessaryCodeCleanUp_RemoveRedundantTypeArguments_description;
 
 	public static String ExpressionsCleanUp_addParanoiac_description;
 	public static String ExpressionsCleanUp_removeUnnecessary_description;
@@ -100,6 +101,8 @@ public class MultiFixMessages extends NLS {
 	public static String NullAnnotationsCleanUp_add_nullable_annotation;
 	public static String NullAnnotationsCleanUp_add_nonnull_annotation;
 	public static String NullAnnotationsCleanUp_remove_redundant_nullness_annotation;
+	public static String TypeParametersCleanUp_InsertInferredTypeArguments_description;
+	public static String TypeParametersCleanUp_RemoveRedundantTypeArguments_description;
 
 	static {
 		// initialize resource bundle

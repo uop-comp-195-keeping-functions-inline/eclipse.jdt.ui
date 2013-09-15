@@ -146,6 +146,14 @@ public class CleanUpTestCase extends QuickFixTest {
 		return ProjectTestSetup.getDefaultClasspath();
 	}
 
+	protected IJavaProject getProject() {
+		return ProjectTestSetup.getProject();
+	}
+
+	protected IClasspathEntry[] getDefaultClasspath() throws CoreException {
+		return ProjectTestSetup.getDefaultClasspath();
+	}
+
 	private void disableAll() throws CoreException {
 		Map settings= fProfile.getSettings();
 		CleanUpOptions options= JavaPlugin.getDefault().getCleanUpRegistry().getDefaultOptions(CleanUpConstants.DEFAULT_CLEAN_UP_OPTIONS);

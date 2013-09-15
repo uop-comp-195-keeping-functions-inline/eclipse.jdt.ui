@@ -135,6 +135,10 @@ public final class FixMessages extends NLS {
 	public static String ExtractToNullCheckedLocalProposal_todoHandleNullDescription;
 	public static String LambdaExpressionsFix_convert_to_anonymous_class_creation;
 	public static String LambdaExpressionsFix_convert_to_lambda_expression;
+	public static String TypeParametersFix_insert_inferred_type_arguments_description;
+	public static String TypeParametersFix_insert_inferred_type_arguments_name;
+	public static String TypeParametersFix_remove_redundant_type_arguments_description;
+	public static String TypeParametersFix_remove_redundant_type_arguments_name;
 
 	static {
 		// initialize resource bundle
