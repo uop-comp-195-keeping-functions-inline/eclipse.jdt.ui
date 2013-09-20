@@ -274,6 +274,13 @@ public class ASTResolving {
 			if (decl != null && !decl.isConstructor()) {
 				return decl.getReturnType2().resolveBinding();
 			}
+			ASTNode ancestor= ASTResolving.findAncestor(parent, ASTNode.LAMBDA_EXPRESSION);
+			if (ancestor != null) {
+				IMethodBinding abstractMethodBinding= ((LambdaExpression) ancestor).resolveMethodBinding();
+				if (abstractMethodBinding != null && abstractMethodBinding.getReturnType() != null) {
+					return abstractMethodBinding.getReturnType();
+				}
+			}
 			break;
 		case ASTNode.CAST_EXPRESSION:
 			return ((CastExpression) parent).getType().resolveBinding();
