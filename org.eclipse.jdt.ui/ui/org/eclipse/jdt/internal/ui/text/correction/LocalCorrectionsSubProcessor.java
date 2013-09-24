@@ -753,6 +753,7 @@ public class LocalCorrectionsSubProcessor {
 		if (selectedNode == null || selectedNode.getLocationInParent() != MethodDeclaration.THROWN_EXCEPTION_TYPES_PROPERTY) {
 			return;
 		}
+		selectedNode= selectedNode.getParent();
 		MethodDeclaration decl= (MethodDeclaration) selectedNode.getParent();
 		IMethodBinding binding= decl.resolveBinding();
 		if (binding != null) {
