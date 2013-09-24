@@ -421,6 +421,7 @@ public class JavadocTagsSubProcessor {
 		} else if (isUnusedParam) {
 			label= CorrectionMessages.JavadocTagsSubProcessor_document_parameter_description;
 		} else {
+			node= node.getParent();
 			label= CorrectionMessages.JavadocTagsSubProcessor_document_exception_description;
 		}
 		ASTRewriteCorrectionProposal proposal= new AddMissingJavadocTagProposal(label, context.getCompilationUnit(), bodyDecl, node, IProposalRelevance.DOCUMENT_UNUSED_ITEM);

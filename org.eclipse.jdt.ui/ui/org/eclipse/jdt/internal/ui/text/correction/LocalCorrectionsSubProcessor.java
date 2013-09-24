@@ -749,9 +749,10 @@ public class LocalCorrectionsSubProcessor {
 
 	public static void addUnnecessaryThrownExceptionProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
-		if (selectedNode == null || !(selectedNode.getParent() instanceof MethodDeclaration)) {
+		if (selectedNode == null || selectedNode.getParent() == null || !(selectedNode.getParent().getParent() instanceof MethodDeclaration)) {
 			return;
 		}
+		selectedNode= selectedNode.getParent();
 		MethodDeclaration decl= (MethodDeclaration) selectedNode.getParent();
 		IMethodBinding binding= decl.resolveBinding();
 		if (binding != null) {
