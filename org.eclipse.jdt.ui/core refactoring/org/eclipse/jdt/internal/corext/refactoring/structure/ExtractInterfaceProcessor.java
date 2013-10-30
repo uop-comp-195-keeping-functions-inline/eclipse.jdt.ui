@@ -70,6 +70,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnnotatableType;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
@@ -750,10 +751,13 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 			AST ast= rewrite.getAST();
 			SimpleName simpleName= ast.newSimpleName(targetName);
 			SimpleType simpleType= ast.newSimpleType(simpleName);
-			Iterator<Annotation> iterator= declaration.getReceiverType().annotations().iterator();
-			while (iterator.hasNext()) {
-				Annotation annotation= iterator.next();
-				simpleType.annotations().add(rewrite.createCopyTarget(annotation));
+			Type receiverType= declaration.getReceiverType();
+			if (receiverType.isAnnotatable()) {
+				Iterator<Annotation> iterator= ((AnnotatableType) receiverType).annotations().iterator();
+				while (iterator.hasNext()) {
+					Annotation annotation= iterator.next();
+					simpleType.annotations().add(rewrite.createCopyTarget(annotation));
+				}
 			}
 			rewrite.set(declaration, MethodDeclaration.RECEIVER_TYPE_PROPERTY, simpleType, null);
 

@@ -5,8 +5,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
- * This is an implementation of an early-draft specification developed under the Java Community Process (JCP) and 
- * is made available for testing and evaluation purposes only. 
+ * This is an implementation of an early-draft specification developed under the Java Community Process (JCP) and
+ * is made available for testing and evaluation purposes only.
  * The code is not compatible with any specification of the JCP.
  * 
  * Contributors:
@@ -73,6 +73,7 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnnotatableType;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
@@ -2261,7 +2262,7 @@ public final class MoveInstanceMethodProcessor extends MoveProcessor implements 
 					adjustments.put(fMethod, adjustment);
 				}
 			}
-			updateReceiverParameter(declaration, rewrite);			
+			updateReceiverParameter(declaration, rewrite);
 			target= createMethodArguments(rewrites, rewrite, declaration, adjustments, status);
 			createMethodTypeParameters(rewrite, declaration, status);
 			createMethodComment(rewrite, declaration);
@@ -2279,10 +2280,13 @@ public final class MoveInstanceMethodProcessor extends MoveProcessor implements 
 			AST ast= rewrite.getAST();
 			SimpleName simpleName= ast.newSimpleName(targetType.getElementName());
 			SimpleType simpleType= ast.newSimpleType(simpleName);
-			Iterator<Annotation> iterator= declaration.getReceiverType().annotations().iterator();
-			while (iterator.hasNext()) {
-				Annotation annotation= iterator.next();
-				simpleType.annotations().add(rewrite.createCopyTarget(annotation));
+			Type receiverType= declaration.getReceiverType();
+			if (receiverType.isAnnotatable()) {
+				Iterator<Annotation> iterator= ((AnnotatableType) receiverType).annotations().iterator();
+				while (iterator.hasNext()) {
+					Annotation annotation= iterator.next();
+					simpleType.annotations().add(rewrite.createCopyTarget(annotation));
+				}
 			}
 			rewrite.set(declaration, MethodDeclaration.RECEIVER_TYPE_PROPERTY, simpleType, null);
 			if (declaration.getReceiverQualifier() != null) {

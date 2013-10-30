@@ -54,6 +54,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AnnotatableType;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
@@ -747,10 +748,13 @@ public abstract class HierarchyProcessor extends SuperTypeRefactoringProcessor {
 		String elementName= type.getElementName();
 		if (oldMethod.getReceiverType() != null) {
 			SimpleType simpleType= ast.newSimpleType(ast.newSimpleName(elementName));
-			Iterator<Annotation> iterator= oldMethod.getReceiverType().annotations().iterator();
-			while (iterator.hasNext()) {
-				Annotation annotation= iterator.next();
-				simpleType.annotations().add(ASTNode.copySubtree(ast, annotation));
+			Type receiverType= oldMethod.getReceiverType();
+			if (receiverType.isAnnotatable()) {
+				Iterator<Annotation> iterator= ((AnnotatableType) receiverType).annotations().iterator();
+				while (iterator.hasNext()) {
+					Annotation annotation= iterator.next();
+					simpleType.annotations().add(ASTNode.copySubtree(ast, annotation));
+				}
 			}
 			newMethod.setReceiverType(simpleType);
 			if (oldMethod.getReceiverQualifier() != null) {
