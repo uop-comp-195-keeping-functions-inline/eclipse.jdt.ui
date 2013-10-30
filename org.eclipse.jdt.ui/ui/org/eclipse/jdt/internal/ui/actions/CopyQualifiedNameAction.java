@@ -1,10 +1,14 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * This is an implementation of an early-draft specification developed under the Java
+ * Community Process (JCP) and is made available for testing and evaluation purposes
+ * only. The code is not compatible with any specification of the JCP.
+ * 
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -65,6 +69,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
+import org.eclipse.jdt.core.dom.PackageQualifiedType;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.Type;
@@ -361,7 +366,7 @@ public class CopyQualifiedNameAction extends SelectionDispatchAction {
 	 */
 	private IBinding getConstructorBindingIfAvailable(Name nameNode) {
 		StructuralPropertyDescriptor loc= nameNode.getLocationInParent();
-		if (loc == SimpleType.NAME_PROPERTY) {
+		if (loc == SimpleType.NAME_PROPERTY || loc == PackageQualifiedType.NAME_PROPERTY) {
 			ASTNode parent= nameNode.getParent();
 			loc= parent.getLocationInParent();
 			if (loc == ClassInstanceCreation.TYPE_PROPERTY)

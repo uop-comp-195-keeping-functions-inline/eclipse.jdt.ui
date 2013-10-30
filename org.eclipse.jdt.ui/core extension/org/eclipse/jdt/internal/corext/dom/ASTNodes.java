@@ -652,8 +652,10 @@ public class ASTNodes {
 			current= current.getParent();
 		}
 		// normalize type
-		if (QualifiedType.NAME_PROPERTY.equals(current.getLocationInParent()) ||
-			SimpleType.NAME_PROPERTY.equals(current.getLocationInParent())) {
+		StructuralPropertyDescriptor locationInParent= current.getLocationInParent();
+		if (QualifiedType.NAME_PROPERTY.equals(locationInParent) ||
+				SimpleType.NAME_PROPERTY.equals(locationInParent) ||
+				PackageQualifiedType.NAME_PROPERTY.equals(locationInParent)) {
 			current= current.getParent();
 		}
 		// normalize parameterized types

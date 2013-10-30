@@ -80,6 +80,7 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.PackageQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
@@ -1437,10 +1438,14 @@ public class LocalCorrectionsSubProcessor {
 		Name node= null;
 		if (selectedNode instanceof SimpleType) {
 			node= ((SimpleType) selectedNode).getName();
+		} else if (selectedNode instanceof PackageQualifiedType) {
+			node= ((PackageQualifiedType) selectedNode).getName();
 		} else if (selectedNode instanceof ArrayType) {
 			Type elementType= ((ArrayType) selectedNode).getElementType();
 			if (elementType.isSimpleType()) {
 				node= ((SimpleType) elementType).getName();
+			} else if (elementType.isPackageQualifiedType()) {
+				node= ((PackageQualifiedType) elementType).getName();
 			} else {
 				return;
 			}
@@ -1464,7 +1469,7 @@ public class LocalCorrectionsSubProcessor {
 			simpleBinding= simpleBinding.getTypeDeclaration();
 		
 			if (!simpleBinding.isRecovered()) {
-				if (binding.isParameterizedType() && node.getParent() instanceof SimpleType && !(node.getParent().getParent() instanceof Type)) {
+				if (binding.isParameterizedType() && (node.getParent() instanceof SimpleType || node.getParent() instanceof PackageQualifiedType) && !(node.getParent().getParent() instanceof Type)) {
 					proposals.add(UnresolvedElementsSubProcessor.createTypeRefChangeFullProposal(cu, binding, node, IProposalRelevance.TYPE_ARGUMENTS_FROM_CONTEXT));
 				}
 			}

@@ -84,6 +84,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.PackageQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.QualifiedType;
@@ -1042,7 +1043,9 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 			// workaround for https://bugs.eclipse.org/62605 (constructor name resolves to type, not method)
 			SimpleName simpleName= (SimpleName) node;
 			StructuralPropertyDescriptor loc= simpleName.getLocationInParent();
-			while (loc == QualifiedType.NAME_PROPERTY || loc == QualifiedName.NAME_PROPERTY|| loc == SimpleType.NAME_PROPERTY || loc == ParameterizedType.TYPE_PROPERTY) {
+			while (loc == QualifiedType.NAME_PROPERTY || loc == QualifiedName.NAME_PROPERTY
+					|| loc == SimpleType.NAME_PROPERTY || loc == PackageQualifiedType.NAME_PROPERTY
+					|| loc == ParameterizedType.TYPE_PROPERTY) {
 				node= node.getParent();
 				loc= node.getLocationInParent();
 			}

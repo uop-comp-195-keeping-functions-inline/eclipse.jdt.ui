@@ -58,6 +58,7 @@ import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.PackageQualifiedType;
 import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.ReturnStatement;
@@ -130,6 +131,9 @@ public class ModifierCorrectionSubProcessor {
 				break;
 			case ASTNode.SIMPLE_TYPE:
 				binding= ((SimpleType) selectedNode).resolveBinding();
+				break;
+			case ASTNode.PACKAGE_QUALIFIED_TYPE:
+				binding= ((PackageQualifiedType) selectedNode).resolveBinding();
 				break;
 			case ASTNode.METHOD_INVOCATION:
 				binding= ((MethodInvocation) selectedNode).getName().resolveBinding();

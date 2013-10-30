@@ -59,6 +59,7 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.PackageQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.PrimitiveType;
@@ -414,7 +415,8 @@ public class ASTResolving {
     	if (locationInParent == QualifiedName.QUALIFIER_PROPERTY) {
     		return null; // can't guess type for X.A
     	}
-    	if (locationInParent == SimpleType.NAME_PROPERTY) {
+		if (locationInParent == SimpleType.NAME_PROPERTY ||
+				locationInParent == PackageQualifiedType.NAME_PROPERTY) {
     		node= node.getParent();
     	}
     	ITypeBinding binding= Bindings.normalizeTypeBinding(getPossibleTypeBinding(node));
