@@ -58,8 +58,8 @@ import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
-import org.eclipse.jdt.core.dom.PackageQualifiedType;
 import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
+import org.eclipse.jdt.core.dom.PackageQualifiedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -201,6 +201,9 @@ public class ModifierCorrectionSubProcessor {
 				case TO_STATIC:
 					label= Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertostatic_description, name);
 					includedModifiers= Modifier.STATIC;
+					if (bindingDecl.getKind() == IBinding.METHOD) {
+						excludedModifiers= Modifier.DEFAULT | Modifier.ABSTRACT;
+					}
 					break;
 				case TO_NON_STATIC:
 					if (typeBinding != null && typeBinding.isInterface())
