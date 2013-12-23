@@ -661,8 +661,15 @@ public class ASTNodes {
 				if (candidate == fOriginalMethod) {
 					continue;
 				}
-				if (fEnclosingType != candidate.getDeclaringClass() && Modifier.isPrivate(candidate.getModifiers())) {
-					continue;
+				ITypeBinding candidateDeclaringType= candidate.getDeclaringClass();
+				if (fEnclosingType != candidateDeclaringType) {
+					int modifiers= candidate.getModifiers();
+					if (candidateDeclaringType.isInterface() && Modifier.isStatic(modifiers)) {
+						continue;
+					}
+					if (Modifier.isPrivate(modifiers)) {
+						continue;
+					}
 				}
 				if (fOriginalMethod.getName().equals(candidate.getName())
 						&& fOriginalMethod.getParameterTypes().length == candidate.getParameterTypes().length
