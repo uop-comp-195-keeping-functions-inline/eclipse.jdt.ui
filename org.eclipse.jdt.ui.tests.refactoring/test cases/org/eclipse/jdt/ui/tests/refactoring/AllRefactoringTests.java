@@ -30,10 +30,12 @@ public class AllRefactoringTests {
 		suite.addTest(ExtractMethodTests17.suite());
 		suite.addTest(ExtractMethodTests18.suite());
 		suite.addTest(InlineMethodTests.suite());
+		suite.addTest(InlineMethodTests18.suite());
 		suite.addTest(ReplaceInvocationsTests.suite());
 		suite.addTest(SefTests.suite());
 		suite.addTest(InlineTempTests.suite());
 		suite.addTest(InlineTempTests17.suite());
+		suite.addTest(InlineTempTests18.suite());
 		suite.addTest(ExtractTempTests.suite());
 		suite.addTest(ExtractTempTests17.suite());
 		suite.addTest(RenameTempTests.suite());
@@ -42,6 +44,7 @@ public class AllRefactoringTests {
 		suite.addTest(ConvertAnonymousToNestedTests.suite());
 		suite.addTest(InlineConstantTests.suite());
 		suite.addTest(InlineConstantTests17.suite());
+		suite.addTest(InlineConstantTests18.suite());
 		suite.addTest(IntroduceParameterTests.suite());
 		suite.addTest(IntroduceParameterTests17.suite());
 		suite.addTest(IntroduceFactoryTests.suite());
