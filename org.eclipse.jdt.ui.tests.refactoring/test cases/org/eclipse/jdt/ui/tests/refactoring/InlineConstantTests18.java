@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -78,5 +78,13 @@ public class InlineConstantTests18 extends InlineConstantTests {
 
 	public void test1003() throws Exception {
 		helper1("p.TestInlineMethodRef_Ambiguous", 5, 28, 5, 30, true, true);
+	}
+
+	public void test1004() throws Exception {
+		helper1("p.TestInlineMethodRef_Enum", 5, 28, 5, 30, true, true);
+	}
+
+	public void test1005() throws Exception {
+		helper1("p.TestInlineMethodRef_Enum", 5, 28, 5, 30, true, true);
 	}
 }
