@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -81,8 +81,8 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.NumberLiteral;
-import org.eclipse.jdt.core.dom.PackageQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.PostfixExpression;
@@ -508,7 +508,7 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 		if (node instanceof Name) {
 			Name name= ASTNodes.getTopMostName((Name) node);
 			if (name.getLocationInParent() == SimpleType.NAME_PROPERTY ||
-					name.getLocationInParent() == PackageQualifiedType.NAME_PROPERTY) {
+					name.getLocationInParent() == NameQualifiedType.NAME_PROPERTY) {
 				ASTNode type= name.getParent();
 				if (type.getLocationInParent() == ParameterizedType.TYPE_PROPERTY) {
 					createdType= (ParameterizedType) type.getParent();
@@ -1278,7 +1278,7 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 		}
 
 		Type type= catchClause.getException().getType();
-		if (!type.isSimpleType() && !type.isUnionType() && !type.isPackageQualifiedType()) {
+		if (!type.isSimpleType() && !type.isUnionType() && !type.isNameQualifiedType()) {
 			return false;
 		}
 
@@ -1300,8 +1300,8 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 			ASTNode parent= topMostName.getParent();
 			if (parent instanceof SimpleType) {
 				selectedMultiCatchType= (SimpleType) parent;
-			} else if (parent instanceof PackageQualifiedType) {
-				selectedMultiCatchType= (PackageQualifiedType) parent;
+			} else if (parent instanceof NameQualifiedType) {
+				selectedMultiCatchType= (NameQualifiedType) parent;
 			}
 		}
 
@@ -1321,7 +1321,7 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 					UnionType unionType= (UnionType) type;
 					List<Type> types= unionType.types();
 					for (Type elementType : types) {
-						if (!(elementType instanceof SimpleType || elementType instanceof PackageQualifiedType))
+						if (!(elementType instanceof SimpleType || elementType instanceof NameQualifiedType))
 							return false;
 						addExceptionToThrows(ast, methodDeclaration, rewrite, elementType);
 					}
@@ -1433,7 +1433,7 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 		if (type.isUnionType() && node instanceof Name) {
 			Name topMostName= ASTNodes.getTopMostName((Name) node);
 			ASTNode parent= topMostName.getParent();
-			if (parent instanceof SimpleType || parent instanceof PackageQualifiedType) {
+			if (parent instanceof SimpleType || parent instanceof NameQualifiedType) {
 				selectedMultiCatchType= (Type) parent;
 			}
 		}
@@ -1506,7 +1506,7 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 		if (type1.isUnionType() && covering instanceof Name) {
 			Name topMostName= ASTNodes.getTopMostName((Name) covering);
 			ASTNode parent= topMostName.getParent();
-			if (parent instanceof SimpleType || parent instanceof PackageQualifiedType) {
+			if (parent instanceof SimpleType || parent instanceof NameQualifiedType) {
 				selectedMultiCatchType= (Type) parent;
 			}
 		}
@@ -1597,7 +1597,7 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 		if (type1.isUnionType() && covering instanceof Name) {
 			Name topMostName= ASTNodes.getTopMostName((Name) covering);
 			ASTNode parent= topMostName.getParent();
-			if (parent instanceof SimpleType || parent instanceof PackageQualifiedType) {
+			if (parent instanceof SimpleType || parent instanceof NameQualifiedType) {
 				selectedMultiCatchType= (Type) parent;
 			}
 		}

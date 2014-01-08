@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -35,8 +35,8 @@ import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.NodeFinder;
-import org.eclipse.jdt.core.dom.PackageQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
@@ -192,8 +192,8 @@ public class OccurrencesFinder extends ASTVisitor implements IOccurrencesFinder 
 			if (name instanceof QualifiedName)
 				name= ((QualifiedName)name).getName();
 			addUsage(name, node.resolveConstructorBinding());
-		} else if (type instanceof PackageQualifiedType) {
-			Name name= ((PackageQualifiedType) type).getName();
+		} else if (type instanceof NameQualifiedType) {
+			Name name= ((NameQualifiedType) type).getName();
 			addUsage(name, node.resolveConstructorBinding());
 		}
 		return super.visit(node);

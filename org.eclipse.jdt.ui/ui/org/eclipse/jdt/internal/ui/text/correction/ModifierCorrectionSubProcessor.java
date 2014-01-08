@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -59,7 +59,7 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
-import org.eclipse.jdt.core.dom.PackageQualifiedType;
+import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -132,8 +132,8 @@ public class ModifierCorrectionSubProcessor {
 			case ASTNode.SIMPLE_TYPE:
 				binding= ((SimpleType) selectedNode).resolveBinding();
 				break;
-			case ASTNode.PACKAGE_QUALIFIED_TYPE:
-				binding= ((PackageQualifiedType) selectedNode).resolveBinding();
+			case ASTNode.NAME_QUALIFIED_TYPE:
+				binding= ((NameQualifiedType) selectedNode).resolveBinding();
 				break;
 			case ASTNode.METHOD_INVOCATION:
 				binding= ((MethodInvocation) selectedNode).getName().resolveBinding();

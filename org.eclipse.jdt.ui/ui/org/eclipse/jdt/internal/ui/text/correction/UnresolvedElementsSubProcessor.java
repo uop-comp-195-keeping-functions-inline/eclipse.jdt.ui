@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -100,7 +100,6 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
-import org.eclipse.jdt.core.dom.PackageQualifiedType;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -216,7 +215,7 @@ public class UnresolvedElementsSubProcessor {
 							node= null;
 						}
 					}
-				} else if (parent instanceof SimpleType || parent instanceof PackageQualifiedType) {
+				} else if (parent instanceof SimpleType) {
 					suggestVariableProposals= false;
 					typeKind= SimilarElementsRequestor.REF_TYPES_AND_VAR;
 				} else if (parent instanceof QualifiedName) {
@@ -230,7 +229,7 @@ public class UnresolvedElementsSubProcessor {
 					while (outerParent instanceof QualifiedName) {
 						outerParent= outerParent.getParent();
 					}
-					if (outerParent instanceof SimpleType || outerParent instanceof PackageQualifiedType) {
+					if (outerParent instanceof SimpleType) {
 						typeKind= SimilarElementsRequestor.REF_TYPES;
 						suggestVariableProposals= false;
 					}
@@ -254,7 +253,7 @@ public class UnresolvedElementsSubProcessor {
 					typeKind= SimilarElementsRequestor.REF_TYPES;
 					suggestVariableProposals= node.isSimpleName();
 				}
-				if (selectedNode.getParent() instanceof SimpleType || selectedNode.getParent() instanceof PackageQualifiedType) {
+				if (selectedNode.getParent() instanceof SimpleType) {
 					typeKind= SimilarElementsRequestor.REF_TYPES;
 					suggestVariableProposals= false;
 				}
@@ -614,14 +613,10 @@ public class UnresolvedElementsSubProcessor {
 		Name node= null;
 		if (selectedNode instanceof SimpleType) {
 			node= ((SimpleType) selectedNode).getName();
-		} else if (selectedNode instanceof PackageQualifiedType) {
-			node= ((PackageQualifiedType) selectedNode).getName();
 		} else if (selectedNode instanceof ArrayType) {
 			Type elementType= ((ArrayType) selectedNode).getElementType();
 			if (elementType.isSimpleType()) {
 				node= ((SimpleType) elementType).getName();
-			} else if (elementType.isPackageQualifiedType()) {
-				node= ((PackageQualifiedType) elementType).getName();
 			} else {
 				return;
 			}
@@ -650,7 +645,7 @@ public class UnresolvedElementsSubProcessor {
 	}
 
 	private static void addEnhancedForWithoutTypeProposals(ICompilationUnit cu, ASTNode selectedNode, Collection<ICommandAccess> proposals) {
-		if (selectedNode instanceof SimpleName && (selectedNode.getLocationInParent() == SimpleType.NAME_PROPERTY || selectedNode.getLocationInParent() == PackageQualifiedType.NAME_PROPERTY)) {
+		if (selectedNode instanceof SimpleName && selectedNode.getLocationInParent() == SimpleType.NAME_PROPERTY) {
 			ASTNode type= selectedNode.getParent();
 			if (type.getLocationInParent() == SingleVariableDeclaration.TYPE_PROPERTY) {
 				SingleVariableDeclaration svd= (SingleVariableDeclaration) type.getParent();
@@ -849,7 +844,7 @@ public class UnresolvedElementsSubProcessor {
 				if (proposal instanceof AddImportCorrectionProposal)
 					proposal.setRelevance(relevance + elements.length + 2);
 
-				if (binding.isParameterizedType() && (node.getParent() instanceof SimpleType || node.getParent() instanceof PackageQualifiedType) && !(node.getParent().getParent() instanceof Type)) {
+				if (binding.isParameterizedType() && node.getParent() instanceof SimpleType && !(node.getParent().getParent() instanceof Type)) {
 					proposals.add(createTypeRefChangeFullProposal(cu, binding, node, relevance + 5));
 				}
 			}

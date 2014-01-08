@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -51,7 +51,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.Name;
-import org.eclipse.jdt.core.dom.PackageQualifiedType;
+import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.QualifiedType;
@@ -389,15 +389,15 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 		Name name= null;
 		if (selection instanceof SimpleType) {
 			name= ((SimpleType) selection).getName();
-		} else if (selection instanceof PackageQualifiedType) {
-			name= ((PackageQualifiedType) selection).getName();
+		} else if (selection instanceof NameQualifiedType) {
+			name= ((NameQualifiedType) selection).getName();
 		} else if (selection instanceof ParameterizedType) {
 			final ParameterizedType type= (ParameterizedType) selection;
 			final Type raw= type.getType();
 			if (raw instanceof SimpleType)
 				name= ((SimpleType) raw).getName();
-			else if (raw instanceof PackageQualifiedType)
-				name= ((PackageQualifiedType) raw).getName();
+			else if (raw instanceof NameQualifiedType)
+				name= ((NameQualifiedType) raw).getName();
 			else if (raw instanceof QualifiedType)
 				name= ((QualifiedType) raw).getName();
 		} else if (selection instanceof Name) {

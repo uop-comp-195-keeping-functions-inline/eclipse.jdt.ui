@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -59,7 +59,7 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
-import org.eclipse.jdt.core.dom.PackageQualifiedType;
+import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.PrimitiveType;
@@ -416,7 +416,7 @@ public class ASTResolving {
     		return null; // can't guess type for X.A
     	}
 		if (locationInParent == SimpleType.NAME_PROPERTY ||
-				locationInParent == PackageQualifiedType.NAME_PROPERTY) {
+				locationInParent == NameQualifiedType.NAME_PROPERTY) {
     		node= node.getParent();
     	}
     	ITypeBinding binding= Bindings.normalizeTypeBinding(getPossibleTypeBinding(node));
