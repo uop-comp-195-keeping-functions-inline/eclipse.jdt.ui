@@ -40,6 +40,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -283,7 +284,17 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 				TextEditGroup group= createTextEditGroup(FixMessages.LambdaExpressionsFix_convert_to_anonymous_class_creation, cuRewrite);
 
 				ITypeBinding lambdaTypeBinding= lambdaExpression.resolveTypeBinding();
-				IMethodBinding methodBinding= lambdaTypeBinding.getDeclaredMethods()[0];
+				IMethodBinding methodBinding= null;
+				for (IMethodBinding method : lambdaTypeBinding.getDeclaredMethods()) {
+					if (Modifier.isAbstract(method.getModifiers())) {
+						methodBinding= method;
+						break;
+					}
+				}
+				if (methodBinding == null) {
+					return;
+				}
+
 				List<VariableDeclaration> parameters= lambdaExpression.parameters();
 				String[] parameterNames= new String[parameters.size()];
 				for (int i= 0; i < parameterNames.length; i++) {
