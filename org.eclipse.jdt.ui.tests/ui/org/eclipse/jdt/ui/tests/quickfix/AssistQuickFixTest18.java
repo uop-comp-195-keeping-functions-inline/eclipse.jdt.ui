@@ -675,6 +675,56 @@ public class AssistQuickFixTest18 extends QuickFixTest {
 		assertProposalDoesNotExist(proposals, FixMessages.LambdaExpressionsFix_convert_to_lambda_expression);
 	}
 
+	public void testConvertToLambda14() throws Exception {
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.util.List;\n");
+		buf.append("\n");
+		buf.append("interface I<T> {\n");
+		buf.append("    void goo(List<T> i);\n");
+		buf.append("}\n");
+		buf.append("\n");
+		buf.append("public class X {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        I i = new I<String>() {\n");
+		buf.append("            @Override\n");
+		buf.append("            public void goo(List<String> ls) {\n");
+		buf.append("                String s = ls.get(0);\n");
+		buf.append("            }\n");
+		buf.append("        };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("X.java", buf.toString(), false, null);
+
+		int offset= buf.toString().indexOf("I<String>()");
+		AssistContext context= getCorrectionContext(cu, offset, 0);
+		assertNoErrors(context);
+		List proposals= collectAssists(context, false);
+
+		assertNumberOfProposals(proposals, 2);
+		assertCorrectLabels(proposals);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.util.List;\n");
+		buf.append("\n");
+		buf.append("interface I<T> {\n");
+		buf.append("    void goo(List<T> i);\n");
+		buf.append("}\n");
+		buf.append("\n");
+		buf.append("public class X {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        I i = (I<String>) ls -> {\n");
+		buf.append("            String s = ls.get(0);\n");
+		buf.append("        };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String expected1= buf.toString();
+
+		assertExpectedExistInProposals(proposals, new String[] { expected1 });
+	}
+
 	public void testConvertToAnonymousClassCreation1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();

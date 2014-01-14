@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -554,6 +554,9 @@ public class ASTNodes {
 	public static ITypeBinding getExplicitCast(Expression initializer, Expression reference) {
 		ITypeBinding initializerType= initializer.resolveTypeBinding();
 		ITypeBinding referenceType= reference.resolveTypeBinding();
+		if (reference instanceof ClassInstanceCreation) {
+			referenceType= ((ClassInstanceCreation) reference).getType().resolveBinding();
+		}
 		if (initializerType == null || referenceType == null)
 			return null;
 		
