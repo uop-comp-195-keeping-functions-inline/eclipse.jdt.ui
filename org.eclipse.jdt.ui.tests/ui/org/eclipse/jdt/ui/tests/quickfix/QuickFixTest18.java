@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,6 +14,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.quickfix;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
@@ -22,6 +23,10 @@ import junit.framework.TestSuite;
 
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
+
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 
@@ -196,6 +201,173 @@ public class QuickFixTest18 extends QuickFixTest {
 
 	}
 	
+	// bug 420116 : test for annotated varargs and return type
+	public void testUnimplementedMethods3() throws Exception {
+		File bundleFile= FileLocator.getBundleFile(Platform.getBundle("org.eclipse.jdt.annotation"));
+		String JAR_PATH;
+		if (bundleFile.isDirectory())
+			JAR_PATH= bundleFile.getPath() + "/bin";
+		else
+			JAR_PATH= bundleFile.getPath();
+		JavaProjectHelper.addLibrary(fJProject1, new Path(JAR_PATH));
+
+		IPackageFragment pack2= fSourceFolder.createPackageFragment("test2", false, null);
+
+
+		StringBuffer buf= new StringBuffer();
+		buf.append("package test2;\n");
+		buf.append("public interface List {\n");
+		buf.append("}\n");
+		pack2.createCompilationUnit("List.java", buf.toString(), false, null);
+
+		buf.append("package test2;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("import java.util.List;\n\n");
+		buf.append("import org.eclipse.jdt.annotation.*;\n");
+		buf.append("public interface Inter {\n");
+		buf.append("    public int foo(@NonNull String @Nullable... s) throws IOException;\n");
+		buf.append("    public int bug(@NonNull String... s) throws IOException;\n");
+		buf.append("    public @NonNull String bar(@NonNull String s, @Nullable List<String> l1, test2.@NonNull List l2);\n");
+		buf.append("    static int staticMethod(Object[] o) throws IOException{return 10;}\n");
+		buf.append("    default int defaultMethod(Object[] o) throws IOException{return 20;}\n");
+		buf.append("}\n");
+		pack2.createCompilationUnit("Inter.java", buf.toString(), false, null);
+
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import test2.Inter;\n");
+		buf.append("public class E implements Inter{\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		CompilationUnit astRoot= getASTRoot(cu);
+		ArrayList proposals= collectCorrections(cu, astRoot, 3);
+		assertNumberOfProposals(proposals, 2);
+		assertCorrectLabels(proposals);
+
+		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(1);
+		String preview1= getPreviewContent(proposal);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import test2.Inter;\n");
+		buf.append("public abstract class E implements Inter{\n");
+		buf.append("}\n");
+		String expected1= buf.toString();
+
+		proposal= (CUCorrectionProposal)proposals.get(0);
+		String preview2= getPreviewContent(proposal);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("import java.util.List;\n\n");
+		buf.append("import org.eclipse.jdt.annotation.NonNull;\n");
+		buf.append("import org.eclipse.jdt.annotation.Nullable;\n\n");
+		buf.append("import test2.Inter;\n");
+		buf.append("public class E implements Inter{\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public int foo(@NonNull String @Nullable... s) throws IOException {\n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n\n");
+		buf.append("    @Override\n");
+		buf.append("    public int bug(@NonNull String... s) throws IOException {\n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n\n");
+		buf.append("    @Override\n");
+		buf.append("    public @NonNull\n");
+		buf.append("    String bar(@NonNull String s, @Nullable List<String> l1,\n");
+		buf.append("            test2.@NonNull List l2) {\n");
+		buf.append("        return null;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String expected2= buf.toString();
+
+		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
+	}
+
+	// bug 420116 : test for annotated varargs and return type
+	public void testUnimplementedMethods4() throws Exception {
+		File bundleFile= FileLocator.getBundleFile(Platform.getBundle("org.eclipse.jdt.annotation"));
+		String JAR_PATH;
+		if (bundleFile.isDirectory())
+			JAR_PATH= bundleFile.getPath() + "/bin";
+		else
+			JAR_PATH= bundleFile.getPath();
+		JavaProjectHelper.addLibrary(fJProject1, new Path(JAR_PATH));
+
+		IPackageFragment pack2= fSourceFolder.createPackageFragment("test1", false, null);
+
+
+		StringBuffer buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n\n");
+		buf.append("import org.eclipse.jdt.annotation.*;\n");
+		buf.append("public interface Inter {\n");
+		buf.append("    public int foo(@NonNull String @Nullable... s) throws IOException;\n");
+		buf.append("    public int bar(@NonNull String... s) throws IOException;\n");
+		buf.append("    static int staticMethod(Object[] o) throws IOException{return 10;}\n");
+		buf.append("    default int defaultMethod(Object[] o) throws IOException{return 20;}\n");
+		buf.append("}\n");
+		buf.append("class E implements Inter{\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu= pack2.createCompilationUnit("Inter.java", buf.toString(), false, null);
+
+		CompilationUnit astRoot= getASTRoot(cu);
+		ArrayList proposals= collectCorrections(cu, astRoot, 2);
+		assertNumberOfProposals(proposals, 2);
+		assertCorrectLabels(proposals);
+
+		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(1);
+		String preview1= getPreviewContent(proposal);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n\n");
+		buf.append("import org.eclipse.jdt.annotation.*;\n");
+		buf.append("public interface Inter {\n");
+		buf.append("    public int foo(@NonNull String @Nullable... s) throws IOException;\n");
+		buf.append("    public int bar(@NonNull String... s) throws IOException;\n");
+		buf.append("    static int staticMethod(Object[] o) throws IOException{return 10;}\n");
+		buf.append("    default int defaultMethod(Object[] o) throws IOException{return 20;}\n");
+		buf.append("}\n");
+		buf.append("abstract class E implements Inter{\n");
+		buf.append("}\n");
+		String expected1= buf.toString();
+
+		proposal= (CUCorrectionProposal)proposals.get(0);
+		String preview2= getPreviewContent(proposal);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n\n");
+		buf.append("import org.eclipse.jdt.annotation.*;\n");
+		buf.append("public interface Inter {\n");
+		buf.append("    public int foo(@NonNull String @Nullable... s) throws IOException;\n");
+		buf.append("    public int bar(@NonNull String... s) throws IOException;\n");
+		buf.append("    static int staticMethod(Object[] o) throws IOException{return 10;}\n");
+		buf.append("    default int defaultMethod(Object[] o) throws IOException{return 20;}\n");
+		buf.append("}\n");
+		buf.append("class E implements Inter{\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public int foo(@NonNull String @Nullable... s) throws IOException {\n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n\n");
+		buf.append("    @Override\n");
+		buf.append("    public int bar(@NonNull String... s) throws IOException {\n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		String expected2= buf.toString();
+
+		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
+	}
+
 	public void testInvalidInterfaceMethodModifier1() throws Exception {
 
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
