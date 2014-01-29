@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -58,7 +58,6 @@ import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
-import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.CodeScopeBuilder;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModel;
@@ -239,7 +238,6 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 		if (!fIsMultiCatch) {
 			for (int i= 0; i < exceptions.length; i++) {
 				ITypeBinding exception= exceptions[i];
-				String type= fImportRewrite.addImport(exception, context);
 				CatchClause catchClause= getAST().newCatchClause();
 				tryStatement.catchClauses().add(catchClause);
 				SingleVariableDeclaration decl= getAST().newSingleVariableDeclaration();
@@ -247,9 +245,9 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 
 				String name= fScope.createName(varName, false);
 				decl.setName(getAST().newSimpleName(name));
-				decl.setType(ASTNodeFactory.newType(getAST(), type));
+				decl.setType(fImportRewrite.addImport(exception, getAST(), context));
 				catchClause.setException(decl);
-				Statement st= getCatchBody(type, name, lineDelimiter);
+				Statement st= getCatchBody(fImportRewrite.addImport(exception, context), name, lineDelimiter);
 				if (st != null) {
 					catchClause.getBody().statements().add(st);
 				}
