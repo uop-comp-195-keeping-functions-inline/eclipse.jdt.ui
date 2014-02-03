@@ -444,12 +444,12 @@ public final class StubUtility2 {
 				IAnnotationBinding[] typeAnnotations= type.getTypeAnnotations();
 				for (IAnnotationBinding annotation : typeAnnotations) {
 					if (StubUtility2.isCopyOnInheritAnnotation(annotation.getAnnotationType(), project))
-						var.modifiers().add(ASTNodeFactory.newAnnotation(ast, annotation, imports, context));
+						var.modifiers().add(imports.addAnnotation(annotation, ast, context));
 				}
 				typeAnnotations= params[i].getTypeAnnotations();
 				for (IAnnotationBinding annotation : typeAnnotations) {
 					if (StubUtility2.isCopyOnInheritAnnotation(annotation.getAnnotationType(), project))
-						var.varargsAnnotations().add(ASTNodeFactory.newAnnotation(ast, annotation, imports, context));
+						var.varargsAnnotations().add(imports.addAnnotation(annotation, ast, context));
 				}
 			} else {
 				ITypeBinding type= params[i];
@@ -465,7 +465,7 @@ public final class StubUtility2 {
 			IAnnotationBinding[] annotations= binding.getParameterAnnotations(i);
 			for (IAnnotationBinding annotation : annotations) {
 				if (StubUtility2.isCopyOnInheritAnnotation(annotation.getAnnotationType(), project))
-					var.modifiers().add(ASTNodeFactory.newAnnotation(ast, annotation, imports, context));
+					var.modifiers().add(imports.addAnnotation(annotation, ast, context));
 			}
 			parameters.add(var);
 		}
@@ -651,7 +651,7 @@ public final class StubUtility2 {
 								String qn= otherAnnotationType.getQualifiedName();
 								if (qn.endsWith(n) && (qn.length() == n.length() || qn.charAt(qn.length() - n.length() - 1) == '.')) {
 									if (StubUtility2.isCopyOnInheritAnnotation(otherAnnotationType, javaProject))
-										result.add(ASTNodeFactory.newAnnotation(ast, annotation, importRewrite, context));
+										result.add(importRewrite.addAnnotation(annotation, ast, context));
 									break;
 								}
 							}
@@ -667,7 +667,7 @@ public final class StubUtility2 {
 		
 		for (IAnnotationBinding annotation : annotations) {
 			if (StubUtility2.isCopyOnInheritAnnotation(annotation.getAnnotationType(), javaProject))
-				result.add(ASTNodeFactory.newAnnotation(ast, annotation, importRewrite, context));
+				result.add(importRewrite.addAnnotation(annotation, ast, context));
 		}
 		
 		result.addAll(ASTNodeFactory.newModifiers(ast, modifiers));
