@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,19 +14,29 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.refactoring;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
+
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.participants.ProcessorBasedRefactoring;
 
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
@@ -34,7 +44,9 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.structure.PullUpRefactoringProcessor;
 import org.eclipse.jdt.internal.corext.template.java.CodeTemplateContextType;
 
 import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
@@ -43,7 +55,7 @@ public class RefactoringTests18 extends RefactoringTest {
 
 	private static final Class clazz= RefactoringTests18.class;
 
-	private static final String REFACTORING_PATH= "Refactoring18/ExtractInterface/";
+	private String REFACTORING_PATH= "Refactoring18/";
 
 	private Hashtable fOldOptions;
 
@@ -129,7 +141,49 @@ public class RefactoringTests18 extends RefactoringTest {
 		validateExtractInterface(className, newInterfaceName);
 	}
 
+	// Test for bug 426963
+	public void testPullUpMethodToInterface() throws Exception {
+		File bundleFile= FileLocator.getBundleFile(Platform.getBundle("org.eclipse.jdt.annotation"));
+		String JAR_PATH;
+		if (bundleFile.isDirectory())
+			JAR_PATH= bundleFile.getPath() + "/bin";
+		else
+			JAR_PATH= bundleFile.getPath();
+		JavaProjectHelper.addLibrary(getPackageP().getJavaProject(), new Path(JAR_PATH));
+
+		REFACTORING_PATH+= "PullUp/";
+		String[] methodNames= new String[] { "getArea" };
+		String[][] signatures= new String[][] { new String[] { "QInteger;" } };
+		ICompilationUnit cuA= createCUfromTestFile(getPackageP(), "A");
+		IMethod[] methods= getMethods(cuA.getType("A"), methodNames, signatures);
+
+		PullUpRefactoringProcessor processor= createPullUpRefactoringProcessor(methods);
+		Refactoring ref= processor.getRefactoring();
+
+		ICompilationUnit cuB= createCUfromTestFile(getPackageP(), "Inter1");
+		assertTrue("activation", ref.checkInitialConditions(new NullProgressMonitor()).isOK());
+
+		IType[] possibleClasses= processor.getCandidateTypes(new RefactoringStatus(), new NullProgressMonitor());
+		assertTrue("No possible class found!", possibleClasses.length > 0);
+		processor.setDestinationType(processor.getCandidateTypes(new RefactoringStatus(), new NullProgressMonitor())[possibleClasses.length - 1 - 0]);
+		processor.setAbstractMethods(methods);
+		processor.setMembersToMove(new IMethod[0]);
+
+		RefactoringStatus checkInputResult= ref.checkFinalConditions(new NullProgressMonitor());
+		assertTrue("precondition was supposed to pass", !checkInputResult.hasError());
+		performChange(ref, false);
+
+		String expected= getFileContents(getOutputTestFileName("A"));
+		String actual= cuA.getSource();
+		assertEqualLines(expected, actual);
+		expected= getFileContents(getOutputTestFileName("Inter1"));
+		actual= cuB.getSource();
+		assertEqualLines(expected, actual);
+
+	}
+
 	private void validateExtractInterface(String className, String newInterfaceName) throws JavaModelException, Exception, IOException {
+		REFACTORING_PATH+= "ExtractInterface/";
 		IType clas= getType(createCUfromTestFile(getPackageP(), getTopLevelTypeName(className)), className);
 		ICompilationUnit cu= clas.getCompilationUnit();
 		IPackageFragment pack= (IPackageFragment)cu.getParent();
@@ -155,4 +209,15 @@ public class RefactoringTests18 extends RefactoringTest {
 				interfaceCu.getSource());
 	}
 
+	private static PullUpRefactoringProcessor createPullUpRefactoringProcessor(IMember[] methods) throws JavaModelException {
+		IJavaProject project= null;
+		if (methods != null && methods.length > 0)
+			project= methods[0].getJavaProject();
+		if (RefactoringAvailabilityTester.isPullUpAvailable(methods)) {
+			PullUpRefactoringProcessor processor= new PullUpRefactoringProcessor(methods, JavaPreferencesSettings.getCodeGenerationSettings(project));
+			new ProcessorBasedRefactoring(processor);
+			return processor;
+		}
+		return null;
+	}
 }

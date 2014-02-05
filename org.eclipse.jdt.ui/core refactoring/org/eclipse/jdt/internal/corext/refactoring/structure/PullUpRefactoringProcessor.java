@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2013 IBM Corporation and others.
+ * Copyright (c) 2006, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -313,20 +313,20 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 	}
 
 	private static Set<IType> getAffectedSubTypes(final ITypeHierarchy hierarchy, final IType type) throws JavaModelException {
-		 IType[] types= null;
-		 final boolean isInterface= type.isInterface();
+		IType[] types= null;
+		final boolean isInterface= type.isInterface();
 		if (isInterface) {
-			 final Collection<IType> remove= new ArrayList<IType>();
-			 final List<IType> list= new ArrayList<IType>(Arrays.asList(hierarchy.getSubtypes(type)));
-			 for (final Iterator<IType> iterator= list.iterator(); iterator.hasNext();) {
-	            final IType element= iterator.next();
-	            if (element.isInterface())
-	            	remove.add(element);
-            }
-			 list.removeAll(remove);
-			 types= list.toArray(new IType[list.size()]);
-		 } else
-			 types= hierarchy.getSubclasses(type);
+			final Collection<IType> remove= new ArrayList<IType>();
+			final List<IType> list= new ArrayList<IType>(Arrays.asList(hierarchy.getSubtypes(type)));
+			for (final Iterator<IType> iterator= list.iterator(); iterator.hasNext();) {
+				final IType element= iterator.next();
+				if (element.isInterface())
+					remove.add(element);
+			}
+			list.removeAll(remove);
+			types= list.toArray(new IType[list.size()]);
+		} else
+			types= hierarchy.getSubclasses(type);
 		final Set<IType> result= new HashSet<IType>();
 		for (int index= 0; index < types.length; index++) {
 			if (!isInterface && JdtFlags.isAbstract(types[index]))
@@ -1040,7 +1040,7 @@ public class PullUpRefactoringProcessor extends HierarchyProcessor {
 		copyThrownExceptions(oldMethod, newMethod);
 		updateReceiverParameter(getDestinationType(), oldMethod, newMethod);
 		ImportRewriteContext context= new ContextSensitiveImportRewriteContext(destination, targetRewrite.getImportRewrite());
-		ImportRewriteUtil.addImports(targetRewrite, context, newMethod, new HashMap<Name, String>(), new HashMap<Name, String>(), false);
+		ImportRewriteUtil.addImports(targetRewrite, context, oldMethod, new HashMap<Name, String>(), new HashMap<Name, String>(), false);
 		targetRewrite.getASTRewrite().getListRewrite(destination, destination.getBodyDeclarationsProperty()).insertAt(newMethod, ASTNodes.getInsertionIndex(newMethod, destination.bodyDeclarations()), targetRewrite.createCategorizedGroupDescription(RefactoringCoreMessages.PullUpRefactoring_add_abstract_method, SET_PULL_UP));
 	}
 
