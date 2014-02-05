@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -154,7 +154,7 @@ public class ReceiverParameterTests18 extends RefactoringTest {
 			return typeQualifiedTyperName;
 		return typeQualifiedTyperName.substring(0, dotIndex);
 	}
-	
+
 	private void prepareForInputCheck(PushDownRefactoringProcessor processor, IMethod[] selectedMethods, IField[] selectedFields, String[] namesOfMethodsToPullUp,
 			String[][] signaturesOfMethodsToPullUp, String[] namesOfFieldsToPullUp, String[] namesOfMethodsToDeclareAbstract, String[][] signaturesOfMethodsToDeclareAbstract) {
 		IMethod[] methodsToPushDown= findMethods(selectedMethods, namesOfMethodsToPullUp, signaturesOfMethodsToPullUp);
@@ -275,7 +275,70 @@ public class ReceiverParameterTests18 extends RefactoringTest {
 		ICompilationUnit cuA= createCUfromTestFile(getPackage("p1"), "A");
 		ICompilationUnit cuB= createCUfromTestFile(getPackage("p1"), "B");
 
-		int offset= cuA.getSource().indexOf("mA1(@NonNull A this, B b)");
+		int offset= cuA.getSource().indexOf("mA1(@NonNull A this, @NonNull B b)");
+		IJavaElement[] codeSelect= cuA.codeSelect(offset, 3);
+		assertTrue(codeSelect.length > 0);
+		assertTrue(codeSelect[0] instanceof IMethod);
+		IMethod method= (IMethod)codeSelect[0];
+		MoveInstanceMethodProcessor processor= new MoveInstanceMethodProcessor(method, JavaPreferencesSettings.getCodeGenerationSettings(cuA.getJavaProject()));
+		Refactoring ref= new MoveRefactoring(processor);
+
+		assertNotNull("refactoring should be created", ref);
+		RefactoringStatus preconditionResult= ref.checkInitialConditions(new NullProgressMonitor());
+
+		assertTrue("activation was supposed to be successful", preconditionResult.isOK());
+
+		IVariableBinding target= null;
+		IVariableBinding[] targets= processor.getPossibleTargets();
+		for (int i= 0; i < targets.length; i++) {
+			IVariableBinding candidate= targets[i];
+			if (candidate.getName().equals("b")) {
+				target= candidate;
+				break;
+			}
+		}
+		assertNotNull("Expected new target not available.", target);
+		processor.setTarget(target);
+
+		processor.setInlineDelegator(inlineDelegator);
+		processor.setRemoveDelegator(removeDelegator);
+		processor.setDeprecateDelegates(false);
+		processor.setMethodName("mA1Moved");
+
+		preconditionResult.merge(ref.checkFinalConditions(new NullProgressMonitor()));
+
+		assertTrue("precondition was supposed to pass", !preconditionResult.hasError());
+
+		performChange(ref, false);
+
+		String outputTestFileName= getOutputTestFileName("A");
+		assertEqualLines("Incorrect inline in " + outputTestFileName, getFileContents(outputTestFileName), cuA.getSource());
+
+
+		outputTestFileName= getOutputTestFileName("B");
+		assertEqualLines("Incorrect inline in " + outputTestFileName, getFileContents(outputTestFileName), cuB.getSource());
+
+	}
+
+	/**
+	 * Tests "Move" method refactoring where the target is type annotated.
+	 *
+	 * @throws Exception any exception thrown from this test case
+	 */
+	public void testMove2() throws Exception {
+		String[] cuQNames= new String[] { "p1.A", "p2.B" };
+		String selectionCuQName= "p1.A";
+		boolean inlineDelegator= false;
+		boolean removeDelegator= false;
+		int selectionCuIndex= -1;
+		for (int i= 0; i < cuQNames.length; i++)
+			if (cuQNames[i] == null || selectionCuQName.equals(cuQNames[i]))
+				selectionCuIndex= i;
+		Assert.isTrue(selectionCuIndex != -1, "parameter selectionCuQName must match some String in cuQNames.");
+		ICompilationUnit cuA= createCUfromTestFile(getPackage("p1"), "A");
+		ICompilationUnit cuB= createCUfromTestFile(getPackage("p1"), "B");
+
+		int offset= cuA.getSource().indexOf("mA1(@Nullable A this, @NonNull B b)");
 		IJavaElement[] codeSelect= cuA.codeSelect(offset, 3);
 		assertTrue(codeSelect.length > 0);
 		assertTrue(codeSelect[0] instanceof IMethod);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -910,7 +910,13 @@ public final class MoveInnerToTopRefactoring extends Refactoring {
 				fStaticImports= new HashSet<IBinding>();
 				ImportRewriteUtil.collectImports(fType.getJavaProject(), declaration, fTypeImports, fStaticImports, false);
 				if (binding != null)
-					fTypeImports.remove(binding);
+					// since type annotations are involved we have to remove binding using key
+					for (ITypeBinding iTypeBinding : fTypeImports) {
+						if (binding.isEqualTo(iTypeBinding)) {
+							fTypeImports.remove(iTypeBinding);
+							break;
+						}
+					}
 			}
 			addEnclosingInstanceTypeParameters(parameters, declaration, rewrite);
 			modifyAccessToEnclosingInstance(targetRewrite, declaration, monitor);

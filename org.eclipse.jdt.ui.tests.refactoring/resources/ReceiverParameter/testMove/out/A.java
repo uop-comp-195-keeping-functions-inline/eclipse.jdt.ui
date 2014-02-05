@@ -9,10 +9,10 @@ import java.lang.annotation.Target;
 }
 public class A {
 
-	public void mA1(@NonNull A this, B b) {
-		b.mA1Moved();
+	public void mA1(@NonNull A this, @NonNull B b) {
+		b.mA1Moved(this);
 	}
 	
-	public void mA2() {}
+	public int mA2() { return 10;}
 
 }

@@ -7,14 +7,17 @@ import java.lang.annotation.Target;
 @interface NonNull {
 
 }
+@Target({ ElementType.TYPE_USE})
+@interface Nullable {
+
+}
 public class A {
 
-	public void mA1(@NonNull A this, @NonNull B b) {
+	public void mA1(@Nullable A this, @NonNull B b) {
 		b.mB1();
-		System.out.println(b + "j");
-		System.out.println(this.mA2());
+		System.out.println(this + "j");
 	}
 	
-	public int mA2() { return 10;}
+	public void mA2() {}
 
 }

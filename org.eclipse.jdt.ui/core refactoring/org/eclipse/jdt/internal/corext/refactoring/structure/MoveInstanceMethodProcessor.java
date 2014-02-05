@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -73,8 +73,6 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
-import org.eclipse.jdt.core.dom.AnnotatableType;
-import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.Assignment;
@@ -101,7 +99,6 @@ import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
-import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
@@ -112,6 +109,7 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
 import org.eclipse.jdt.core.refactoring.descriptors.JavaRefactoringDescriptor;
@@ -2062,7 +2060,10 @@ public final class MoveInstanceMethodProcessor extends MoveProcessor implements 
 					final ITypeBinding declaring= method.getDeclaringClass();
 					if (declaring != null) {
 						adjustTypeVisibility(declaring);
-						variable.setType(rewriter.getImportRewrite().addImport(declaring, ast));
+						if (declaration.getReceiverType() != null)
+							variable.setType(rewriter.getImportRewrite().addImport(declaration.getReceiverType().resolveBinding(), ast));
+						else
+							variable.setType(rewriter.getImportRewrite().addImport(declaring, ast));
 						variable.setName(ast.newSimpleName(fTargetName));
 						if (finder.getResult().size() > 0)
 							variable.modifiers().add(ast.newModifier(Modifier.ModifierKeyword.FINAL_KEYWORD));
@@ -2262,7 +2263,7 @@ public final class MoveInstanceMethodProcessor extends MoveProcessor implements 
 					adjustments.put(fMethod, adjustment);
 				}
 			}
-			updateReceiverParameter(declaration, rewrite);
+			updateReceiverParameter(declaration, rewrite, rewriter.getImportRewrite());
 			target= createMethodArguments(rewrites, rewrite, declaration, adjustments, status);
 			createMethodTypeParameters(rewrite, declaration, status);
 			createMethodComment(rewrite, declaration);
@@ -2274,24 +2275,22 @@ public final class MoveInstanceMethodProcessor extends MoveProcessor implements 
 		return target;
 	}
 
-	private void updateReceiverParameter(final MethodDeclaration declaration, final ASTRewrite rewrite) throws JavaModelException {
+	private void updateReceiverParameter(final MethodDeclaration declaration, final ASTRewrite rewrite, final ImportRewrite importRewrite) {
 		if (declaration.getReceiverType() != null) {
-			IType targetType= getTargetType();
-			AST ast= rewrite.getAST();
-			SimpleName simpleName= ast.newSimpleName(targetType.getElementName());
-			SimpleType simpleType= ast.newSimpleType(simpleName);
-			Type receiverType= declaration.getReceiverType();
-			if (receiverType.isAnnotatable()) {
-				Iterator<Annotation> iterator= ((AnnotatableType) receiverType).annotations().iterator();
-				while (iterator.hasNext()) {
-					Annotation annotation= iterator.next();
-					simpleType.annotations().add(rewrite.createCopyTarget(annotation));
-				}
-			}
-			rewrite.set(declaration, MethodDeclaration.RECEIVER_TYPE_PROPERTY, simpleType, null);
+			rewrite.set(declaration, MethodDeclaration.RECEIVER_TYPE_PROPERTY, null, null);
 			if (declaration.getReceiverQualifier() != null) {
-				SimpleName qualifierName= ast.newSimpleName(targetType.getElementName());
-				rewrite.set(declaration, MethodDeclaration.RECEIVER_QUALIFIER_PROPERTY, qualifierName, null);
+				rewrite.set(declaration, MethodDeclaration.RECEIVER_QUALIFIER_PROPERTY, null, null);
+			}
+		}
+		for (Object object : declaration.parameters()) {
+			VariableDeclaration variable= (VariableDeclaration) object;
+			IVariableBinding binding= variable.resolveBinding();
+			if (Bindings.equals(binding, fTarget)) {
+				if (fTarget.getType().getTypeAnnotations() != null && fTarget.getType().getTypeAnnotations().length > 0) {
+					Type type= importRewrite.addImport(binding.getType(), rewrite.getAST());
+					rewrite.set(declaration, MethodDeclaration.RECEIVER_TYPE_PROPERTY, type, null);
+					break;
+				}
 			}
 		}
 	}
