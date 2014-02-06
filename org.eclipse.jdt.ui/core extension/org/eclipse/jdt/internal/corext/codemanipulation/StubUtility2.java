@@ -442,15 +442,11 @@ public final class StubUtility2 {
 				var.setType(ASTNodeFactory.newType(ast, buffer.toString()));
 				var.setVarargs(true);
 				IAnnotationBinding[] typeAnnotations= type.getTypeAnnotations();
-				for (IAnnotationBinding annotation : typeAnnotations) {
-					if (StubUtility2.isCopyOnInheritAnnotation(annotation.getAnnotationType(), project))
-						var.modifiers().add(imports.addAnnotation(annotation, ast, context));
-				}
+				for (IAnnotationBinding annotation : typeAnnotations)
+					var.modifiers().add(imports.addAnnotation(annotation, ast, context));
 				typeAnnotations= params[i].getTypeAnnotations();
-				for (IAnnotationBinding annotation : typeAnnotations) {
-					if (StubUtility2.isCopyOnInheritAnnotation(annotation.getAnnotationType(), project))
-						var.varargsAnnotations().add(imports.addAnnotation(annotation, ast, context));
-				}
+				for (IAnnotationBinding annotation : typeAnnotations)
+					var.varargsAnnotations().add(imports.addAnnotation(annotation, ast, context));
 			} else {
 				ITypeBinding type= params[i];
 				if (type.isWildcardType()) {

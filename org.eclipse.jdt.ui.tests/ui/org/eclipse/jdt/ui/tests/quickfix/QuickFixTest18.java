@@ -21,6 +21,8 @@ import java.util.Hashtable;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.osgi.framework.Bundle;
+
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
 
@@ -200,7 +202,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2 }, new String[] { expected1, expected2 });
 
 	}
-	
+
 	// bug 420116 : test for annotated varargs and return type
 	public void testUnimplementedMethods3() throws Exception {
 		File bundleFile= FileLocator.getBundleFile(Platform.getBundle("org.eclipse.jdt.annotation"));
@@ -291,7 +293,9 @@ public class QuickFixTest18 extends QuickFixTest {
 
 	// bug 420116 : test for annotated varargs and return type
 	public void testUnimplementedMethods4() throws Exception {
-		File bundleFile= FileLocator.getBundleFile(Platform.getBundle("org.eclipse.jdt.annotation"));
+		Bundle[] bundle= Platform.getBundles("org.eclipse.jdt.annotation", "[2.0.0,3.0.0)");
+		assertTrue("Required version of annotation jar could not be found!", bundle != null && bundle.length > 0);
+		File bundleFile= FileLocator.getBundleFile(bundle[0]);
 		String JAR_PATH;
 		if (bundleFile.isDirectory())
 			JAR_PATH= bundleFile.getPath() + "/bin";
@@ -299,26 +303,65 @@ public class QuickFixTest18 extends QuickFixTest {
 			JAR_PATH= bundleFile.getPath();
 		JavaProjectHelper.addLibrary(fJProject1, new Path(JAR_PATH));
 
-		IPackageFragment pack2= fSourceFolder.createPackageFragment("test1", false, null);
-
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		IPackageFragment pack2= fSourceFolder.createPackageFragment("test2", false, null);
 
 		StringBuffer buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.io.IOException;\n\n");
-		buf.append("import org.eclipse.jdt.annotation.*;\n");
-		buf.append("public interface Inter {\n");
-		buf.append("    public int foo(@NonNull String @Nullable... s) throws IOException;\n");
-		buf.append("    public int bar(@NonNull String... s) throws IOException;\n");
-		buf.append("    static int staticMethod(Object[] o) throws IOException{return 10;}\n");
-		buf.append("    default int defaultMethod(Object[] o) throws IOException{return 20;}\n");
+		buf.append("package test2;\n");
+		buf.append("public interface List {\n");
 		buf.append("}\n");
+		pack2.createCompilationUnit("List.java", buf.toString(), false, null);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.lang.annotation.ElementType;\n");
+		buf.append("import java.lang.annotation.Target;\n");
+		buf.append("\n");
+		buf.append("@Target(ElementType.TYPE_USE)\n");
+		buf.append("public @interface ReadOnly {\n");
+		buf.append("\n");
+		buf.append("}\n");
+		pack1.createCompilationUnit("ReadOnly.java", buf.toString(), false, null);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n\n");
+		buf.append("import org.eclipse.jdt.annotation.NonNull;\n");
+		buf.append("import org.eclipse.jdt.annotation.Nullable;\n\n");
+		buf.append("import test2.List;\n\n");
+		buf.append("\n");
+		buf.append("interface Inter {\n");
+		buf.append("\n");
+		buf.append("    int foo1(@Nullable Object[] o1, Object @Nullable [] o2);\n");
+		buf.append("\n");
+		buf.append("    int foo2(Object @Nullable... o1);\n");
+		buf.append("\n");
+		buf.append("    String @ReadOnly [] foo3(Object @Nullable [] o1, @Nullable Object... o2);\n");
+		buf.append("\n");
+		buf.append("    @ReadOnly String[] foo4(@Nullable String s1, @NonNull String... s2);\n");
+		buf.append("\n");
+		buf.append("    @ReadOnly Integer foo5(@Nullable List l1, java.util.@NonNull List<String> l2);\n");
+		buf.append("\n");
+		buf.append("    int foo11(@ReadOnly Object[] o1, Object @ReadOnly [] o2);\n");
+		buf.append("\n");
+		buf.append("    int foo22(Object @ReadOnly... o1);\n");
+		buf.append("\n");
+		buf.append("    int foo33(Object @ReadOnly [] o1, @ReadOnly Object... o2);\n");
+		buf.append("\n");
+		buf.append("    void foo44(@ReadOnly String s1, @ReadOnly String... s2);\n");
+		buf.append("\n");
+		buf.append("    void foo55(@ReadOnly List l1, java.util.@ReadOnly List<String> l2);\n");
+		buf.append("}\n");
+		pack1.createCompilationUnit("Inter.java", buf.toString(), false, null);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
 		buf.append("class E implements Inter{\n");
 		buf.append("}\n");
+		ICompilationUnit cuE= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		ICompilationUnit cu= pack2.createCompilationUnit("Inter.java", buf.toString(), false, null);
 
-		CompilationUnit astRoot= getASTRoot(cu);
-		ArrayList proposals= collectCorrections(cu, astRoot, 2);
+		CompilationUnit astRoot= getASTRoot(cuE);
+		ArrayList proposals= collectCorrections(cuE, astRoot, 10);
 		assertNumberOfProposals(proposals, 2);
 		assertCorrectLabels(proposals);
 
@@ -327,14 +370,6 @@ public class QuickFixTest18 extends QuickFixTest {
 
 		buf= new StringBuffer();
 		buf.append("package test1;\n");
-		buf.append("import java.io.IOException;\n\n");
-		buf.append("import org.eclipse.jdt.annotation.*;\n");
-		buf.append("public interface Inter {\n");
-		buf.append("    public int foo(@NonNull String @Nullable... s) throws IOException;\n");
-		buf.append("    public int bar(@NonNull String... s) throws IOException;\n");
-		buf.append("    static int staticMethod(Object[] o) throws IOException{return 10;}\n");
-		buf.append("    default int defaultMethod(Object[] o) throws IOException{return 20;}\n");
-		buf.append("}\n");
 		buf.append("abstract class E implements Inter{\n");
 		buf.append("}\n");
 		String expected1= buf.toString();
@@ -343,24 +378,61 @@ public class QuickFixTest18 extends QuickFixTest {
 		String preview2= getPreviewContent(proposal);
 
 		buf= new StringBuffer();
-		buf.append("package test1;\n");
-		buf.append("import java.io.IOException;\n\n");
-		buf.append("import org.eclipse.jdt.annotation.*;\n");
-		buf.append("public interface Inter {\n");
-		buf.append("    public int foo(@NonNull String @Nullable... s) throws IOException;\n");
-		buf.append("    public int bar(@NonNull String... s) throws IOException;\n");
-		buf.append("    static int staticMethod(Object[] o) throws IOException{return 10;}\n");
-		buf.append("    default int defaultMethod(Object[] o) throws IOException{return 20;}\n");
-		buf.append("}\n");
+		buf.append("package test1;\n\n");
+		buf.append("import org.eclipse.jdt.annotation.NonNull;\n");
+		buf.append("import org.eclipse.jdt.annotation.Nullable;\n\n");
+		buf.append("import test2.List;\n\n");
 		buf.append("class E implements Inter{\n");
 		buf.append("\n");
 		buf.append("    @Override\n");
-		buf.append("    public int foo(@NonNull String @Nullable... s) throws IOException {\n");
+		buf.append("    public int foo1(@Nullable Object[] o1, Object @Nullable [] o2) {\n");
 		buf.append("        return 0;\n");
-		buf.append("    }\n\n");
+		buf.append("    }\n");
+		buf.append("\n");
 		buf.append("    @Override\n");
-		buf.append("    public int bar(@NonNull String... s) throws IOException {\n");
+		buf.append("    public int foo2(Object @Nullable... o1) {\n");
 		buf.append("        return 0;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public String @ReadOnly [] foo3(Object @Nullable [] o1,\n");
+		buf.append("            @Nullable Object... o2) {\n");
+		buf.append("        return null;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public @ReadOnly\n");
+		buf.append("    String[] foo4(@Nullable String s1, @NonNull String... s2) {\n");
+		buf.append("        return null;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public @ReadOnly\n");
+		buf.append("    Integer foo5(@Nullable List l1, java.util.@NonNull List<String> l2) {\n");
+		buf.append("        return null;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public int foo11(@ReadOnly Object[] o1, Object @ReadOnly [] o2) {\n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public int foo22(Object @ReadOnly... o1) {\n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public int foo33(Object @ReadOnly [] o1, @ReadOnly Object... o2) {\n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public void foo44(@ReadOnly String s1, @ReadOnly String... s2) {\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public void foo55(@ReadOnly List l1, java.util.@ReadOnly List<String> l2) {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected2= buf.toString();
@@ -427,7 +499,7 @@ public class QuickFixTest18 extends QuickFixTest {
 
 		assertEqualStringsIgnoreOrder(new String[] { preview1 }, new String[] { expected1 });
 	}
-	
+
 	public void testAbstractInterfaceMethodWithBody1() throws Exception {
 
 		StringBuffer buf= new StringBuffer();
@@ -540,7 +612,7 @@ public class QuickFixTest18 extends QuickFixTest {
 
 		assertEqualStringsIgnoreOrder(new String[] { preview1, preview2, preview3 }, new String[] { expected1, expected2, expected3 });
 	}
-	
+
 	public void testCreateMethodQuickFix1() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
@@ -577,7 +649,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("}\n");
 		assertEqualStringsIgnoreOrder(new String[] { getPreviewContent(proposal) }, new String[] { buf.toString() });
 	}
-	
+
 	public void testCreateMethodQuickFix2() throws Exception {
 		StringBuffer buf= new StringBuffer();
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
