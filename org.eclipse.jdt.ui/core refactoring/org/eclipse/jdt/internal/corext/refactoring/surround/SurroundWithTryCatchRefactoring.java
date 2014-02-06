@@ -58,6 +58,7 @@ import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.CodeScopeBuilder;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModel;
@@ -245,9 +246,10 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 
 				String name= fScope.createName(varName, false);
 				decl.setName(getAST().newSimpleName(name));
-				decl.setType(fImportRewrite.addImport(exception, getAST(), context));
+				Type type= fImportRewrite.addImport(exception, getAST(), context);
+				decl.setType(type);
 				catchClause.setException(decl);
-				Statement st= getCatchBody(fImportRewrite.addImport(exception, context), name, lineDelimiter);
+				Statement st= getCatchBody(ASTNodes.getQualifiedTypeName(type), name, lineDelimiter);
 				if (st != null) {
 					catchClause.getBody().statements().add(st);
 				}
