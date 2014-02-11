@@ -16,8 +16,11 @@ package org.eclipse.jdt.internal.corext.fix;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 
@@ -94,9 +97,9 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 	
 	private static final class LambdaExpressionsFinder extends ASTVisitor {
 	
-		private final ArrayList<LambdaExpression> fNodes= new ArrayList<LambdaExpression>();
+		private final HashMap<LambdaExpression, IMethodBinding> fNodes= new HashMap<LambdaExpression, IMethodBinding>();
 	
-		public static ArrayList<LambdaExpression> perform(ASTNode node) {
+		public static HashMap<LambdaExpression, IMethodBinding> perform(ASTNode node) {
 			LambdaExpressionsFinder finder= new LambdaExpressionsFinder();
 			node.accept(finder);
 			return finder.fNodes;
@@ -104,9 +107,9 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 		
 		@Override
 		public boolean visit(LambdaExpression node) {
-			ITypeBinding typeBinding= node.resolveTypeBinding();
-			if (typeBinding != null) {
-				fNodes.add(node);
+			IMethodBinding abstractMethod= getSingleAbstractMethod(node);
+			if (abstractMethod != null) {
+				fNodes.put(node, abstractMethod);
 			}
 			return true;
 		}
@@ -265,9 +268,9 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 
 	private static class CreateAnonymousClassCreationOperation extends CompilationUnitRewriteOperation {
 
-		private final List<LambdaExpression> fExpressions;
+		private final Map<LambdaExpression, IMethodBinding> fExpressions;
 
-		public CreateAnonymousClassCreationOperation(List<LambdaExpression> changedNodes) {
+		public CreateAnonymousClassCreationOperation(Map<LambdaExpression, IMethodBinding> changedNodes) {
 			fExpressions= changedNodes;
 		}
 
@@ -280,22 +283,11 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 			ASTRewrite rewrite= cuRewrite.getASTRewrite();
 			AST ast= rewrite.getAST();
 
-			for (Iterator<LambdaExpression> iterator= fExpressions.iterator(); iterator.hasNext();) {
-				LambdaExpression lambdaExpression= iterator.next();
+			for (LambdaExpression lambdaExpression : fExpressions.keySet()) {
 				TextEditGroup group= createTextEditGroup(FixMessages.LambdaExpressionsFix_convert_to_anonymous_class_creation, cuRewrite);
 
 				ITypeBinding lambdaTypeBinding= lambdaExpression.resolveTypeBinding();
-				IMethodBinding methodBinding= null;
-				for (IMethodBinding method : lambdaTypeBinding.getDeclaredMethods()) {
-					if (Modifier.isAbstract(method.getModifiers())) {
-						methodBinding= method;
-						break;
-					}
-				}
-				if (methodBinding == null) {
-					return;
-				}
-
+				IMethodBinding methodBinding= fExpressions.get(lambdaExpression);
 				List<VariableDeclaration> parameters= lambdaExpression.parameters();
 				String[] parameterNames= new String[parameters.size()];
 				for (int i= 0; i < parameterNames.length; i++) {
@@ -359,12 +351,33 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 	public static IProposableFix createConvertToAnonymousClassCreationsFix(LambdaExpression lambda) {
 		// offer the quick assist at pre 1.8 levels as well to get rid of the compilation error (TODO: offer this as a quick fix in that case)
 
-		if (lambda.resolveTypeBinding() == null)
+		IMethodBinding abstractMethod= getSingleAbstractMethod(lambda);
+		if (abstractMethod == null)
 			return null;
 
-		CreateAnonymousClassCreationOperation op= new CreateAnonymousClassCreationOperation(Collections.singletonList(lambda));
+		CreateAnonymousClassCreationOperation op= new CreateAnonymousClassCreationOperation(Collections.singletonMap(lambda, abstractMethod));
 		CompilationUnit root= (CompilationUnit) lambda.getRoot();
 		return new LambdaExpressionsFix(FixMessages.LambdaExpressionsFix_convert_to_anonymous_class_creation, root, new CompilationUnitRewriteOperation[] { op });
+	}
+
+	private static IMethodBinding getSingleAbstractMethod(LambdaExpression lambda) {
+		ITypeBinding lambdaTypeBinding= lambda.resolveTypeBinding();
+		if (lambdaTypeBinding == null)
+			return null;
+
+		ITypeBinding objectType= lambda.getAST().resolveWellKnownType("java.lang.Object"); //$NON-NLS-1$
+		ArrayList<IMethodBinding> objectPublicMethods= new ArrayList<IMethodBinding>();
+		for (IMethodBinding objMethod : objectType.getDeclaredMethods()) {
+			if (Modifier.isPublic(objMethod.getModifiers()) && !objMethod.isConstructor()) {
+				objectPublicMethods.add(objMethod);
+			}
+		}
+		ArrayList<IMethodBinding> abstractMethods= new ArrayList<IMethodBinding>();
+		StubUtility2.findUnimplementedInterfaceMethods(lambdaTypeBinding, new HashSet<ITypeBinding>(), objectPublicMethods, lambdaTypeBinding.getPackage(), abstractMethods);
+
+		if (abstractMethods.size() != 1)
+			return null;
+		return abstractMethods.get(0);
 	}
 
 	public static ICleanUpFix createCleanUp(CompilationUnit compilationUnit, boolean useLambda, boolean useAnonymous) {
@@ -380,7 +393,7 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 			return new LambdaExpressionsFix(FixMessages.LambdaExpressionsFix_convert_to_lambda_expression, compilationUnit, new CompilationUnitRewriteOperation[] { op });
 			
 		} else if (useAnonymous) {
-			ArrayList<LambdaExpression> convertibleNodes= LambdaExpressionsFinder.perform(compilationUnit);
+			HashMap<LambdaExpression, IMethodBinding> convertibleNodes= LambdaExpressionsFinder.perform(compilationUnit);
 			if (convertibleNodes.isEmpty())
 				return null;
 			

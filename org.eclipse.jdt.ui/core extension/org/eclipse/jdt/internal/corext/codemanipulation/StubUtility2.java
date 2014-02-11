@@ -513,7 +513,7 @@ public final class StubUtility2 {
 		return null;
 	}
 
-	private static void findUnimplementedInterfaceMethods(ITypeBinding typeBinding, HashSet<ITypeBinding> visited, ArrayList<IMethodBinding> allMethods, IPackageBinding currPack, ArrayList<IMethodBinding> toImplement) {
+	public static void findUnimplementedInterfaceMethods(ITypeBinding typeBinding, HashSet<ITypeBinding> visited, ArrayList<IMethodBinding> allMethods, IPackageBinding currPack, ArrayList<IMethodBinding> toImplement) {
 		if (visited.add(typeBinding)) {
 			IMethodBinding[] typeMethods= typeBinding.getDeclaredMethods();
 			for (int i= 0; i < typeMethods.length; i++) {
@@ -770,7 +770,7 @@ public final class StubUtility2 {
 		for (int i= 0; i < allMethods.size(); i++) {
 			IMethodBinding curr= allMethods.get(i);
 			int modifiers= curr.getModifiers();
-			if ((Modifier.isAbstract(modifiers) || curr.getDeclaringClass().isInterface()) && (implementAbstractsOfInput || typeBinding != curr.getDeclaringClass())) {
+			if (Modifier.isAbstract(modifiers) && (implementAbstractsOfInput || typeBinding != curr.getDeclaringClass())) {
 				// implement all abstract methods
 				toImplement.add(curr);
 			}
