@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2013 IBM Corporation and others.
+ * Copyright (c) 2005, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -831,7 +831,8 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static boolean isMoveMethodAvailable(final IMethod method) throws JavaModelException {
-		return method.exists() && !method.isConstructor() && !method.isBinary() && !method.getDeclaringType().isInterface() && !method.isReadOnly() && !JdtFlags.isStatic(method);
+		return method.exists() && !method.isConstructor() && !method.isBinary() && (method.getDeclaringType().isInterface() && JdtFlags.isDefaultMethod(method)) && !method.isReadOnly()
+				&& !JdtFlags.isStatic(method);
 	}
 
 	public static boolean isMoveMethodAvailable(final IStructuredSelection selection) throws JavaModelException {

@@ -1473,7 +1473,7 @@ public final class MoveInstanceMethodProcessor extends MoveProcessor implements 
 			monitor.worked(1);
 			if (fMethod.getDeclaringType().isAnnotation())
 				status.merge(RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.MoveInstanceMethodProcessor_no_annotation, JavaStatusContext.create(fMethod)));
-			else if (fMethod.getDeclaringType().isInterface())
+			else if (fMethod.getDeclaringType().isInterface() && !Flags.isDefaultMethod(flags))
 				status.merge(RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.MoveInstanceMethodProcessor_no_interface, JavaStatusContext.create(fMethod)));
 			monitor.worked(1);
 		} finally {
@@ -1603,7 +1603,7 @@ public final class MoveInstanceMethodProcessor extends MoveProcessor implements 
 				ITypeBinding binding= null;
 				for (int index= 0; index < bindings.length; index++) {
 					binding= bindings[index].getType();
-					if ((binding.isClass() || binding.isEnum()) && binding.isFromSource()) {
+					if ((binding.isClass() || binding.isEnum() || (binding.isInterface() && JdtFlags.isDefaultMethod(method))) && binding.isFromSource()) {
 						possibleTargets.add(bindings[index]);
 						candidateTargets.add(bindings[index]);
 					}
@@ -2256,9 +2256,15 @@ public final class MoveInstanceMethodProcessor extends MoveProcessor implements 
 				if (declaring != null && Bindings.equals(declaring.getPackage(), fTarget.getType().getPackage()))
 					same= true;
 				final Modifier.ModifierKeyword keyword= same ? null : Modifier.ModifierKeyword.PUBLIC_KEYWORD;
-				if (MemberVisibilityAdjustor.hasLowerVisibility(binding.getModifiers(), same ? Modifier.NONE : keyword == null ? Modifier.NONE : keyword.toFlagValue()) && MemberVisibilityAdjustor.needsVisibilityAdjustments(fMethod, keyword, adjustments)) {
+				ModifierRewrite modifierRewrite= ModifierRewrite.create(rewrite, declaration);
+				if (JdtFlags.isDefaultMethod(binding) && getTargetType().isClass()) {
+					// Remove 'default' modifier and add 'public' visibility
+					modifierRewrite.setVisibility(Modifier.ModifierKeyword.PUBLIC_KEYWORD.toFlagValue(), null);
+					modifierRewrite.setModifiers(Modifier.NONE, Modifier.DEFAULT, null);
+				} else if (MemberVisibilityAdjustor.hasLowerVisibility(binding.getModifiers(), same ? Modifier.NONE : keyword == null ? Modifier.NONE : keyword.toFlagValue())
+						&& MemberVisibilityAdjustor.needsVisibilityAdjustments(fMethod, keyword, adjustments)) {
 					final MemberVisibilityAdjustor.IncomingMemberVisibilityAdjustment adjustment= new MemberVisibilityAdjustor.IncomingMemberVisibilityAdjustment(fMethod, keyword, RefactoringStatus.createStatus(RefactoringStatus.WARNING, Messages.format(RefactoringCoreMessages.MemberVisibilityAdjustor_change_visibility_method_warning, new String[] { MemberVisibilityAdjustor.getLabel(fMethod), MemberVisibilityAdjustor.getLabel(keyword) }), JavaStatusContext.create(fMethod), null, RefactoringStatusEntry.NO_CODE, null));
-					ModifierRewrite.create(rewrite, declaration).setVisibility(keyword == null ? Modifier.NONE : keyword.toFlagValue(), null);
+					modifierRewrite.setVisibility(keyword == null ? Modifier.NONE : keyword.toFlagValue(), null);
 					adjustment.setNeedsRewriting(false);
 					adjustments.put(fMethod, adjustment);
 				}
