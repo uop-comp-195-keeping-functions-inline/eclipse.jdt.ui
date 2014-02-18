@@ -21,8 +21,6 @@ import java.util.Hashtable;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.osgi.framework.Bundle;
-
 import org.eclipse.jdt.testplugin.JavaProjectHelper;
 import org.eclipse.jdt.testplugin.TestOptions;
 
@@ -280,8 +278,7 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("        return 0;\n");
 		buf.append("    }\n\n");
 		buf.append("    @Override\n");
-		buf.append("    public @NonNull\n");
-		buf.append("    String bar(@NonNull String s, @Nullable List<String> l1,\n");
+		buf.append("    public @NonNull String bar(@NonNull String s, @Nullable List<String> l1,\n");
 		buf.append("            test2.@NonNull List l2) {\n");
 		buf.append("        return null;\n");
 		buf.append("    }\n");
@@ -293,9 +290,8 @@ public class QuickFixTest18 extends QuickFixTest {
 
 	// bug 420116 : test for annotated varargs and return type
 	public void testUnimplementedMethods4() throws Exception {
-		Bundle[] bundle= Platform.getBundles("org.eclipse.jdt.annotation", "[2.0.0,3.0.0)");
-		assertTrue("Required version of annotation jar could not be found!", bundle != null && bundle.length > 0);
-		File bundleFile= FileLocator.getBundleFile(bundle[0]);
+		File bundleFile= FileLocator.getBundleFile(Platform.getBundle("org.eclipse.jdt.annotation"));
+
 		String JAR_PATH;
 		if (bundleFile.isDirectory())
 			JAR_PATH= bundleFile.getPath() + "/bin";
@@ -401,14 +397,13 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("    }\n");
 		buf.append("\n");
 		buf.append("    @Override\n");
-		buf.append("    public @ReadOnly\n");
-		buf.append("    String[] foo4(@Nullable String s1, @NonNull String... s2) {\n");
+		buf.append("    public @ReadOnly String[] foo4(@Nullable String s1, @NonNull String... s2) {\n");
 		buf.append("        return null;\n");
 		buf.append("    }\n");
 		buf.append("\n");
 		buf.append("    @Override\n");
-		buf.append("    public @ReadOnly\n");
-		buf.append("    Integer foo5(@Nullable List l1, java.util.@NonNull List<String> l2) {\n");
+		buf.append("    public @ReadOnly Integer foo5(@Nullable List l1,\n");
+		buf.append("            java.util.@NonNull List<String> l2) {\n");
 		buf.append("        return null;\n");
 		buf.append("    }\n");
 		buf.append("\n");
