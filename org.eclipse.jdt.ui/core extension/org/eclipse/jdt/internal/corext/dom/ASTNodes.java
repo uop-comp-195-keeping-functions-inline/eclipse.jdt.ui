@@ -614,7 +614,6 @@ public class ASTNodes {
 		StructuralPropertyDescriptor locationInParent= expression.getLocationInParent();
 		IMethodBinding methodBinding;
 		int argumentIndex;
-		ITypeBinding enclosingTypeBinding;
 
 		if (locationInParent == MethodInvocation.ARGUMENTS_PROPERTY) {
 			MethodInvocation methodInvocation= (MethodInvocation) parent;
@@ -644,28 +643,31 @@ public class ASTNodes {
 			return false;
 		}
 
-		enclosingTypeBinding= getEnclosingType(parent);
-		if (enclosingTypeBinding != null && methodBinding != null) {
-			TypeBindingVisitor visitor= new AmbiguousTargetMethodAnalyzer(enclosingTypeBinding, methodBinding, argumentIndex);
-			return !(visitor.visit(enclosingTypeBinding) && Bindings.visitHierarchy(enclosingTypeBinding, visitor));
+		if (methodBinding != null) {
+			IMethodBinding methodDeclBinding= methodBinding.getMethodDeclaration();
+			if (methodDeclBinding != null) {
+				ITypeBinding declaringTypeBinding= methodDeclBinding.getDeclaringClass();
+				TypeBindingVisitor visitor= new AmbiguousTargetMethodAnalyzer(declaringTypeBinding, methodDeclBinding, argumentIndex);
+				return !(visitor.visit(declaringTypeBinding) && Bindings.visitHierarchy(declaringTypeBinding, visitor));
+			}
 		}
 
 		return true;
 	}
 
 	private static class AmbiguousTargetMethodAnalyzer implements TypeBindingVisitor {
-		private ITypeBinding fEnclosingType;
+		private ITypeBinding fDeclaringType;
 		private IMethodBinding fOriginalMethod;
 		private int fArgIndex;
 
 		/**
-		 * @param enclosingType the type binding enclosing the method call
-		 * @param originalMethod the method binding corresponding to the method call
+		 * @param declaringType the type binding declaring the <code>originalMethod</code>
+		 * @param originalMethod the method declaration binding corresponding to the method call
 		 * @param argumentIndex the index of the functional interface instance argument in the
 		 *            method call
 		 */
-		public AmbiguousTargetMethodAnalyzer(ITypeBinding enclosingType, IMethodBinding originalMethod, int argumentIndex) {
-			fEnclosingType= enclosingType;
+		public AmbiguousTargetMethodAnalyzer(ITypeBinding declaringType, IMethodBinding originalMethod, int argumentIndex) {
+			fDeclaringType= declaringType;
 			fOriginalMethod= originalMethod;
 			fArgIndex= argumentIndex;
 		}
@@ -678,7 +680,7 @@ public class ASTNodes {
 					continue;
 				}
 				ITypeBinding candidateDeclaringType= candidate.getDeclaringClass();
-				if (fEnclosingType != candidateDeclaringType) {
+				if (fDeclaringType != candidateDeclaringType) {
 					int modifiers= candidate.getModifiers();
 					if (candidateDeclaringType.isInterface() && Modifier.isStatic(modifiers)) {
 						continue;
@@ -728,42 +730,42 @@ public class ASTNodes {
 			MethodInvocation methodInvocation= (MethodInvocation) parent;
 			IMethodBinding methodBinding= methodInvocation.resolveMethodBinding();
 			if (methodBinding != null) {
-				return ASTResolving.getParameterTypeBinding(expression, methodInvocation.arguments(), methodBinding);
+				return getParameterTypeBinding(expression, methodInvocation.arguments(), methodBinding);
 			}
 
 		} else if (locationInParent == SuperMethodInvocation.ARGUMENTS_PROPERTY) {
 			SuperMethodInvocation superMethodInvocation= (SuperMethodInvocation) parent;
 			IMethodBinding superMethodBinding= superMethodInvocation.resolveMethodBinding();
 			if (superMethodBinding != null) {
-				return ASTResolving.getParameterTypeBinding(expression, superMethodInvocation.arguments(), superMethodBinding);
+				return getParameterTypeBinding(expression, superMethodInvocation.arguments(), superMethodBinding);
 			}
 
 		} else if (locationInParent == ConstructorInvocation.ARGUMENTS_PROPERTY) {
 			ConstructorInvocation constructorInvocation= (ConstructorInvocation) parent;
 			IMethodBinding constructorBinding= constructorInvocation.resolveConstructorBinding();
 			if (constructorBinding != null) {
-				return ASTResolving.getParameterTypeBinding(expression, constructorInvocation.arguments(), constructorBinding);
+				return getParameterTypeBinding(expression, constructorInvocation.arguments(), constructorBinding);
 			}
 
 		} else if (locationInParent == SuperConstructorInvocation.ARGUMENTS_PROPERTY) {
 			SuperConstructorInvocation superConstructorInvocation= (SuperConstructorInvocation) parent;
 			IMethodBinding superConstructorBinding= superConstructorInvocation.resolveConstructorBinding();
 			if (superConstructorBinding != null) {
-				return ASTResolving.getParameterTypeBinding(expression, superConstructorInvocation.arguments(), superConstructorBinding);
+				return getParameterTypeBinding(expression, superConstructorInvocation.arguments(), superConstructorBinding);
 			}
 
 		} else if (locationInParent == ClassInstanceCreation.ARGUMENTS_PROPERTY) {
 			ClassInstanceCreation creation= (ClassInstanceCreation) parent;
 			IMethodBinding creationBinding= creation.resolveConstructorBinding();
 			if (creationBinding != null) {
-				return ASTResolving.getParameterTypeBinding(expression, creation.arguments(), creationBinding);
+				return getParameterTypeBinding(expression, creation.arguments(), creationBinding);
 			}
 
 		} else if (locationInParent == EnumConstantDeclaration.ARGUMENTS_PROPERTY) {
 			EnumConstantDeclaration enumConstantDecl= (EnumConstantDeclaration) parent;
 			IMethodBinding enumConstructorBinding= enumConstantDecl.resolveConstructorBinding();
 			if (enumConstructorBinding != null) {
-				return ASTResolving.getParameterTypeBinding(expression, enumConstantDecl.arguments(), enumConstructorBinding);
+				return getParameterTypeBinding(expression, enumConstantDecl.arguments(), enumConstructorBinding);
 			}
 
 		} else if (locationInParent == LambdaExpression.BODY_PROPERTY) {
@@ -788,6 +790,11 @@ public class ASTNodes {
 
 		}
 		return null;
+	}
+
+	private static ITypeBinding getParameterTypeBinding(Expression expression, List<Expression> arguments, IMethodBinding methodBinding) {
+		IMethodBinding methodDeclBinding= methodBinding.getMethodDeclaration();
+		return methodDeclBinding != null ? ASTResolving.getParameterTypeBinding(expression, arguments, methodDeclBinding) : null;
 	}
 
 	private static ITypeBinding getTargetTypeForArrayInitializer(ArrayInitializer arrayInitializer) {
