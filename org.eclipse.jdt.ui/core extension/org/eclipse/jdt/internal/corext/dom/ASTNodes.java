@@ -585,7 +585,7 @@ public class ASTNodes {
 				return referenceType;
 			} else {
 				ITypeBinding targetType= getTargetType(reference);
-				if (targetType != null && targetType != referenceType) {
+				if (!referenceType.isEqualTo(targetType)) {
 					return referenceType;
 				}
 			}

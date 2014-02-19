@@ -186,7 +186,20 @@ public class CleanUpTest18 extends CleanUpTestCase {
 		disable(CleanUpConstants.USE_ANONYMOUS_CLASS_CREATION);
 		enable(CleanUpConstants.USE_LAMBDA);
 		
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { original });
+		buf= new StringBuffer();
+		buf.append("package test;\n");
+		buf.append("import java.util.*;\n");
+		buf.append("public class E {\n");
+		buf.append("    void foo(Integer[] ints){\n");
+		buf.append("        Arrays.sort(ints, (Comparator<Integer>) (i1, i2) -> i1 - i2);\n");
+		buf.append("        Comparator<?> cw = (Comparator<Object>) (w1, w2) -> 0;\n");
+		buf.append("        Comparator cr = (r1, r2) -> 0;\n");
+		buf.append("        Comparator<? extends Number> ce = (Comparator<Number>) (n1, n2) -> -0;\n");
+		buf.append("    };\n");
+		buf.append("}\n");
+		String expected2= buf.toString();
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected2 });
 	}
 
 	public void testConvertToAnonymous_andBack_WithWildcards1() throws Exception {
@@ -230,7 +243,19 @@ public class CleanUpTest18 extends CleanUpTestCase {
 		disable(CleanUpConstants.USE_ANONYMOUS_CLASS_CREATION);
 		enable(CleanUpConstants.USE_LAMBDA);
 
-		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { original });
+		buf= new StringBuffer();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("interface I<M> {\n");
+		buf.append("    M run(M x);\n");
+		buf.append("}\n");
+		buf.append("\n");
+		buf.append("class Test {\n");
+		buf.append("    I<?> li = (I<Object>) s -> null;\n");
+		buf.append("}\n");
+		String expected2= buf.toString();
+
+		assertRefactoringResultAsExpected(new ICompilationUnit[] { cu1 }, new String[] { expected2 });
 	}
 
 	public void testConvertToLambdaNestedWithImports() throws Exception {
@@ -261,10 +286,11 @@ public class CleanUpTest18 extends CleanUpTestCase {
 		
 		buf= new StringBuffer();
 		buf.append("package test;\n");
+		buf.append("import java.util.concurrent.Callable;\n");
 		buf.append("import java.util.concurrent.Executors;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo() {\n");
-		buf.append("        new Thread(() -> Executors.newSingleThreadExecutor().submit(() -> \"hi\"));\n");
+		buf.append("        new Thread(() -> Executors.newSingleThreadExecutor().submit((Callable<String>) () -> \"hi\"));\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		String expected1= buf.toString();

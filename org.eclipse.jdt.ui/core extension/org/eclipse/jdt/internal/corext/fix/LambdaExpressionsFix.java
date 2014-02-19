@@ -250,12 +250,15 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 				lambdaExpression.setBody(rewrite.createCopyTarget(lambdaBody));
 				Expression replacement= lambdaExpression;
 				ITypeBinding cicTypeBinding= classInstanceCreation.getType().resolveBinding();
-				if (ASTNodes.isTargetAmbiguous(classInstanceCreation) || cicTypeBinding != ASTNodes.getTargetType(classInstanceCreation)) {
+				ITypeBinding targetTypeBinding= ASTNodes.getTargetType(classInstanceCreation);
+				if (cicTypeBinding != null && (ASTNodes.isTargetAmbiguous(classInstanceCreation) || !cicTypeBinding.isEqualTo(targetTypeBinding))) {
 					CastExpression cast= ast.newCastExpression();
 					cast.setExpression(lambdaExpression);
 					ImportRewrite importRewrite= cuRewrite.getImportRewrite();
 					ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(classInstanceCreation, importRewrite);
-					cast.setType(importRewrite.addImport(cicTypeBinding, ast, importRewriteContext));
+					Type castType= importRewrite.addImport(cicTypeBinding, ast, importRewriteContext);
+					importRemover.registerAddedImports(castType);
+					cast.setType(castType);
 					replacement= cast;
 				}
 				rewrite.replace(classInstanceCreation, replacement, group);
