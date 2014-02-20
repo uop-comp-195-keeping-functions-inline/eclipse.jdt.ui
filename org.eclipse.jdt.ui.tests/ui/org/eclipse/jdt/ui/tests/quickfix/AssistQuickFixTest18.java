@@ -726,6 +726,84 @@ public class AssistQuickFixTest18 extends QuickFixTest {
 		assertExpectedExistInProposals(proposals, new String[] { expected1 });
 	}
 
+	// test for bug 425413
+	public void testConvertToLambda15() throws Exception {
+		IPackageFragment pack2= fSourceFolder.createPackageFragment("p2", false, null);
+		StringBuffer buf= new StringBuffer();
+		buf.append("package p2;\n");
+		buf.append("\n");
+		buf.append("import java.lang.annotation.ElementType;\n");
+		buf.append("import java.lang.annotation.Target;\n");
+		buf.append("\n");
+		buf.append("@Target(ElementType.TYPE_USE)\n");
+		buf.append("public @interface ReadOnly {\n");
+		buf.append("\n");
+		buf.append("}\n");
+		pack2.createCompilationUnit("ReadOnly.java", buf.toString(), false, null);
+
+		buf= new StringBuffer();
+		buf.append("package p1;\n");
+		buf.append("\n");
+		buf.append("import p2.ReadOnly;\n");
+		buf.append("\n");
+		buf.append("public class X {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        I i = new I() {\n");
+		buf.append("\n");
+		buf.append("            @Override\n");
+		buf.append("            public void goo(@ReadOnly String... k) {\n");
+		buf.append("                @ReadOnly\n");
+		buf.append("                String s = \"something\";\n");
+		buf.append("                System.out.println(k);\n");
+		buf.append("            }\n");
+		buf.append("\n");
+		buf.append("        };\n");
+		buf.append("        System.out.println(i);\n");
+		buf.append("\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		buf.append("\n");
+		buf.append("interface I {\n");
+		buf.append("    void goo(String... strings);\n");
+		buf.append("}\n");
+		buf.append("\n");
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("p1", false, null);
+		ICompilationUnit cu= pack1.createCompilationUnit("X.java", buf.toString(), false, null);
+
+		int offset= buf.toString().indexOf("new I()");
+		AssistContext context= getCorrectionContext(cu, offset, 0);
+		assertNoErrors(context);
+		List proposals= collectAssists(context, false);
+
+		assertNumberOfProposals(proposals, 3);
+		assertCorrectLabels(proposals);
+
+		buf= new StringBuffer();
+		buf.append("package p1;\n");
+		buf.append("\n");
+		buf.append("import p2.ReadOnly;\n");
+		buf.append("\n");
+		buf.append("public class X {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        I i = (@ReadOnly String... k) -> {\n");
+		buf.append("            @ReadOnly\n");
+		buf.append("            String s = \"something\";\n");
+		buf.append("            System.out.println(k);\n");
+		buf.append("        };\n");
+		buf.append("        System.out.println(i);\n");
+		buf.append("\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		buf.append("\n");
+		buf.append("interface I {\n");
+		buf.append("    void goo(String... strings);\n");
+		buf.append("}\n");
+		buf.append("\n");
+		String expected1= buf.toString();
+
+		assertExpectedExistInProposals(proposals, new String[] { expected1 });
+	}
+
 	public void testConvertToAnonymousClassCreation1() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf= new StringBuffer();

@@ -223,9 +223,13 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 				List<VariableDeclaration> lambdaParameters= lambdaExpression.parameters();
 				lambdaExpression.setParentheses(methodParameters.size() != 1);
 				for (SingleVariableDeclaration methodParameter : methodParameters) {
-					VariableDeclarationFragment lambdaParameter= ast.newVariableDeclarationFragment();
-					lambdaParameter.setName((SimpleName) rewrite.createCopyTarget(methodParameter.getName()));
-					lambdaParameters.add(lambdaParameter);
+					if (!methodParameter.modifiers().isEmpty()) {
+						lambdaParameters.add((SingleVariableDeclaration) rewrite.createCopyTarget(methodParameter));
+					} else {
+						VariableDeclarationFragment lambdaParameter= ast.newVariableDeclarationFragment();
+						lambdaParameter.setName((SimpleName) rewrite.createCopyTarget(methodParameter.getName()));
+						lambdaParameters.add(lambdaParameter);
+					}
 				}
 				
 				Block body= methodDeclaration.getBody();
@@ -264,7 +268,7 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 				rewrite.replace(classInstanceCreation, replacement, group);
 
 				importRemover.registerRemovedNode(classInstanceCreation);
-				importRemover.registerRetainedNode(lambdaBody);
+				importRemover.registerRetainedNode(methodDeclaration);
 			}
 		}
 	}
