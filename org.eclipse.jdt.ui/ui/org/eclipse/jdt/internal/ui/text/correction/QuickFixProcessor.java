@@ -278,6 +278,7 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.ConstructorReferenceNotBelow18:
 			case IProblem.IntersectionCastNotBelow18:
 			case IProblem.IllegalModifierForInterfaceMethod18:
+			case IProblem.InvalidUsageOfTypeAnnotations:
 				return true;
 			default:
 				return SuppressWarningsSubProcessor.hasSuppressWarningsProposal(cu.getJavaProject(), problemId);
@@ -639,6 +640,7 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.MethodReferenceNotBelow18:
 			case IProblem.ConstructorReferenceNotBelow18:
 			case IProblem.IntersectionCastNotBelow18:
+			case IProblem.InvalidUsageOfTypeAnnotations:
 				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals, JavaCore.VERSION_1_8);
 				break;
 			case IProblem.NonGenericType:
