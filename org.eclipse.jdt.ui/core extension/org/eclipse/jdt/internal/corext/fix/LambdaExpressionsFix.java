@@ -30,11 +30,16 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.ArrayInitializer;
+import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ConditionalExpression;
+import org.eclipse.jdt.core.dom.ConstructorInvocation;
+import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.IBinding;
@@ -48,6 +53,8 @@ import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
+import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.ThisExpression;
@@ -73,6 +80,7 @@ import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ui.cleanup.ICleanUpFix;
 
 import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
+import org.eclipse.jdt.internal.ui.text.correction.ASTResolving;
 
 public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 
@@ -223,13 +231,9 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 				List<VariableDeclaration> lambdaParameters= lambdaExpression.parameters();
 				lambdaExpression.setParentheses(methodParameters.size() != 1);
 				for (SingleVariableDeclaration methodParameter : methodParameters) {
-					if (!methodParameter.modifiers().isEmpty()) {
-						lambdaParameters.add((SingleVariableDeclaration) rewrite.createCopyTarget(methodParameter));
-					} else {
-						VariableDeclarationFragment lambdaParameter= ast.newVariableDeclarationFragment();
-						lambdaParameter.setName((SimpleName) rewrite.createCopyTarget(methodParameter.getName()));
-						lambdaParameters.add(lambdaParameter);
-					}
+					VariableDeclarationFragment lambdaParameter= ast.newVariableDeclarationFragment();
+					lambdaParameter.setName((SimpleName) rewrite.createCopyTarget(methodParameter.getName()));
+					lambdaParameters.add(lambdaParameter);
 				}
 				
 				Block body= methodDeclaration.getBody();
@@ -268,7 +272,7 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 				rewrite.replace(classInstanceCreation, replacement, group);
 
 				importRemover.registerRemovedNode(classInstanceCreation);
-				importRemover.registerRetainedNode(methodDeclaration);
+				importRemover.registerRetainedNode(lambdaBody);
 			}
 		}
 	}
@@ -422,7 +426,7 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 		ITypeBinding[] interfaces= typeBinding.getInterfaces();
 		if (interfaces.length != 1)
 			return false;
-		if (!interfaces[0].isFunctionalInterface())
+		if (interfaces[0].getFunctionalInterfaceMethod() == null)
 			return false;
 	
 		AnonymousClassDeclaration anonymTypeDecl= node.getAnonymousClassDeclaration();
@@ -457,10 +461,6 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 	}
 
 	private static boolean isInTargetTypeContext(ClassInstanceCreation node) {
-		ITypeBinding targetType= ASTNodes.getTargetType(node);
-		return targetType != null && targetType.isFunctionalInterface();
-
-		/*
 		//TODO: probably incomplete, should reuse https://bugs.eclipse.org/bugs/show_bug.cgi?id=408966#c6
 		StructuralPropertyDescriptor locationInParent= node.getLocationInParent();
 		
@@ -472,10 +472,10 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 			if (methodBinding == null)
 				return false;
 			//TODO: could also cast to the CIC type instead of aborting...
-			return methodBinding.getReturnType().isFunctionalInterface();
+			return methodBinding.getReturnType().getFunctionalInterfaceMethod() != null;
 		}
 		
-		//TODO: should also check whether variable is of a functional type 
+		//TODO: should also check whether variable is of a functional type
 		return locationInParent == SingleVariableDeclaration.INITIALIZER_PROPERTY
 				|| locationInParent == VariableDeclarationFragment.INITIALIZER_PROPERTY
 				|| locationInParent == Assignment.RIGHT_HAND_SIDE_PROPERTY
@@ -492,6 +492,5 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFix {
 				|| locationInParent == ConditionalExpression.THEN_EXPRESSION_PROPERTY
 				|| locationInParent == ConditionalExpression.ELSE_EXPRESSION_PROPERTY
 				|| locationInParent == CastExpression.EXPRESSION_PROPERTY;
-		*/
 	}
 }
