@@ -181,7 +181,7 @@ public abstract class HierarchicalASTVisitor extends ASTVisitor {
 
 	@Override
 	public boolean visit(FieldDeclaration node) {
-		return visit((BodyDeclaration)node);
+		return true;
 	}
 
 	@Override

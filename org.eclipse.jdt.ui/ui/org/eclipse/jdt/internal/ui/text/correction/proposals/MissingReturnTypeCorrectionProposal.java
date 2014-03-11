@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -42,7 +42,7 @@ import org.eclipse.jdt.internal.ui.text.correction.CorrectionMessages;
 
 public class MissingReturnTypeCorrectionProposal extends LinkedCorrectionProposal {
 
-	private static final String RETURN_EXPRESSION_KEY= "value"; //$NON-NLS-1$
+	protected static final String RETURN_EXPRESSION_KEY= "value"; //$NON-NLS-1$
 
 	private MethodDeclaration fMethodDecl;
 	protected ReturnStatement fExistingReturn;
@@ -137,18 +137,7 @@ public class MissingReturnTypeCorrectionProposal extends LinkedCorrectionProposa
 
 		Expression result= null;
 		if (returnBinding != null) {
-			ScopeAnalyzer analyzer= new ScopeAnalyzer(root);
-			IBinding[] bindings= analyzer.getDeclarationsInScope(returnOffset, ScopeAnalyzer.VARIABLES | ScopeAnalyzer.CHECK_VISIBILITY );
-			for (int i= 0; i < bindings.length; i++) {
-				IVariableBinding curr= (IVariableBinding) bindings[i];
-				ITypeBinding type= curr.getType();
-				if (type != null && type.isAssignmentCompatible(returnBinding) && testModifier(curr)) {
-					if (result == null) {
-						result= ast.newSimpleName(curr.getName());
-					}
-					addLinkedPositionProposal(RETURN_EXPRESSION_KEY, curr.getName(), null);
-				}
-			}
+			result= computeProposals(ast, returnBinding, returnOffset, root, result);
 		}
 		Expression defaultExpression= createDefaultExpression(ast);
 		addLinkedPositionProposal(RETURN_EXPRESSION_KEY, ASTNodes.asString(defaultExpression), null);
@@ -158,7 +147,23 @@ public class MissingReturnTypeCorrectionProposal extends LinkedCorrectionProposa
 		return result;
 	}
 
-	private boolean testModifier(IVariableBinding curr) {
+	protected Expression computeProposals(AST ast, ITypeBinding returnBinding, int returnOffset, CompilationUnit root, Expression result) {
+		ScopeAnalyzer analyzer= new ScopeAnalyzer(root);
+		IBinding[] bindings= analyzer.getDeclarationsInScope(returnOffset, ScopeAnalyzer.VARIABLES | ScopeAnalyzer.CHECK_VISIBILITY);
+		for (int i= 0; i < bindings.length; i++) {
+			IVariableBinding curr= (IVariableBinding) bindings[i];
+			ITypeBinding type= curr.getType();
+			if (type != null && type.isAssignmentCompatible(returnBinding) && testModifier(curr)) {
+				if (result == null) {
+					result= ast.newSimpleName(curr.getName());
+				}
+				addLinkedPositionProposal(RETURN_EXPRESSION_KEY, curr.getName(), null);
+			}
+		}
+		return result;
+	}
+
+	protected boolean testModifier(IVariableBinding curr) {
 		int modifiers= curr.getModifiers();
 		int staticFinal= Modifier.STATIC | Modifier.FINAL;
 		if ((modifiers & staticFinal) == staticFinal) {

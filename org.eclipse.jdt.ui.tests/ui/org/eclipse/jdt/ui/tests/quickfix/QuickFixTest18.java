@@ -1074,9 +1074,57 @@ public class QuickFixTest18 extends QuickFixTest {
 		buf.append("    I i2= (int x) -> {\n");
 		buf.append("        x++;\n");
 		buf.append("        System.out.println(x);\n");
-		buf.append("        return 0;\n");
+		buf.append("        return x;\n");
 		buf.append("    };\n");
 		buf.append("    \n");
+		buf.append("}\n");
+		assertEqualStringsIgnoreOrder(new String[] { getPreviewContent(proposal) }, new String[] { buf.toString() });
+	}
+
+	public void testLambdaReturnType5() throws Exception {
+		StringBuffer buf= new StringBuffer();
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.math.BigInteger;\n");
+		buf.append("\n");
+		buf.append("interface A { Object m(Class c); }\n");
+		buf.append("interface B<S extends Number> { Object m(Class<S> c); }\n");
+		buf.append("interface C<T extends BigInteger> { Object m(Class<T> c); }\n");
+		buf.append("@FunctionalInterface\n");
+		buf.append("interface D<S,T> extends A, B<BigInteger>, C<BigInteger> {}\n");
+		buf.append("\n");
+		buf.append("class E {\n");
+		buf.append("    private void foo() {\n");
+		buf.append("         D<BigInteger,BigInteger> d1= (x) -> {\n");
+		buf.append("            };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		CompilationUnit astRoot= getASTRoot(cu);
+		ArrayList proposals= collectCorrections(cu, astRoot, 1);
+		assertNumberOfProposals(proposals, 1);
+		assertCorrectLabels(proposals);
+
+		CUCorrectionProposal proposal= (CUCorrectionProposal)proposals.get(0);
+
+		buf= new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.math.BigInteger;\n");
+		buf.append("\n");
+		buf.append("interface A { Object m(Class c); }\n");
+		buf.append("interface B<S extends Number> { Object m(Class<S> c); }\n");
+		buf.append("interface C<T extends BigInteger> { Object m(Class<T> c); }\n");
+		buf.append("@FunctionalInterface\n");
+		buf.append("interface D<S,T> extends A, B<BigInteger>, C<BigInteger> {}\n");
+		buf.append("\n");
+		buf.append("class E {\n");
+		buf.append("    private void foo() {\n");
+		buf.append("         D<BigInteger,BigInteger> d1= (x) -> {\n");
+		buf.append("            return x;\n");
+		buf.append("            };\n");
+		buf.append("    }\n");
 		buf.append("}\n");
 		assertEqualStringsIgnoreOrder(new String[] { getPreviewContent(proposal) }, new String[] { buf.toString() });
 	}
