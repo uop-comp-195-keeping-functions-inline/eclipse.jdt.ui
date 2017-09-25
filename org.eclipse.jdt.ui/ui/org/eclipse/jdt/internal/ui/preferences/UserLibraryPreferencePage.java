@@ -1537,6 +1537,8 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 
 		@Override
 		public boolean hasChildren(TreeListDialogField<CPUserLibraryElement> field, Object element) {
+			if (getChildren(field, element) == null)
+				return false;
 			return getChildren(field, element).length > 0;
 		}
 
