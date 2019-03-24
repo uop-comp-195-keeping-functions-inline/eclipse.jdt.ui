@@ -54,6 +54,8 @@ public class OpenEditorActionGroup extends ActionGroup {
 	private IWorkbenchSite fSite;
 	private boolean fIsEditorOwner;
 	private OpenAction fOpen;
+
+	private OpenPopupAction fOpenPopup;
 	private ISelectionProvider fSelectionProvider;
 
 	/**
@@ -82,10 +84,14 @@ public class OpenEditorActionGroup extends ActionGroup {
 		fSite= site;
 		fOpen= new OpenAction(fSite);
 		fOpen.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_EDITOR);
+		fOpenPopup= new OpenPopupAction(fSite);
+		fOpenPopup.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_POPUP);
 		fSelectionProvider= specialSelectionProvider == null ? fSite.getSelectionProvider() : specialSelectionProvider;
 		initialize();
-		if (specialSelectionProvider != null)
+		if (specialSelectionProvider != null) {
 			fOpen.setSpecialSelectionProvider(specialSelectionProvider);
+			fOpenPopup.setSpecialSelectionProvider(specialSelectionProvider);
+		}
 	}
 
 	/**
@@ -99,6 +105,9 @@ public class OpenEditorActionGroup extends ActionGroup {
 		fOpen= new OpenAction(editor);
 		fOpen.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_EDITOR);
 		editor.setAction("OpenEditor", fOpen); //$NON-NLS-1$
+		fOpenPopup= new OpenPopupAction(editor);
+		fOpenPopup.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_POPUP);
+		editor.setAction("OpenPopupEditor", fOpenPopup); //$NON-NLS-1$
 		fSite= editor.getEditorSite();
 		fSelectionProvider= fSite.getSelectionProvider();
 		initialize();
@@ -114,11 +123,24 @@ public class OpenEditorActionGroup extends ActionGroup {
 		return fOpen;
 	}
 
+	/**
+	 * Returns the open popup action managed by this action group.
+	 *
+	 * @since 3.18
+	 * @return the open popup action. Returns <code>null</code> if the group doesn't provide any
+	 *         open action
+	 */
+	public IAction getOpenPopupAction() {
+		return fOpenPopup;
+	}
+
 	private void initialize() {
 		ISelection selection= fSelectionProvider.getSelection();
 		fOpen.update(selection);
+		fOpenPopup.update(selection);
 		if (!fIsEditorOwner) {
 			fSelectionProvider.addSelectionChangedListener(fOpen);
+			fSelectionProvider.addSelectionChangedListener(fOpenPopup);
 		}
 	}
 
@@ -132,6 +154,7 @@ public class OpenEditorActionGroup extends ActionGroup {
 	public void fillContextMenu(IMenuManager menu) {
 		super.fillContextMenu(menu);
 		appendToGroup(menu, fOpen);
+		appendToGroup(menu, fOpenPopup);
 		if (!fIsEditorOwner) {
 			addOpenWithMenu(menu);
 		}
@@ -143,11 +166,13 @@ public class OpenEditorActionGroup extends ActionGroup {
 	@Override
 	public void dispose() {
 		fSelectionProvider.removeSelectionChangedListener(fOpen);
+		fSelectionProvider.removeSelectionChangedListener(fOpenPopup);
 		super.dispose();
 	}
 
 	private void setGlobalActionHandlers(IActionBars actionBars) {
 		actionBars.setGlobalActionHandler(JdtActionConstants.OPEN, fOpen);
+		actionBars.setGlobalActionHandler(JdtActionConstants.OPEN_POPUP, fOpenPopup);
 	}
 
 	private void appendToGroup(IMenuManager menu, IAction action) {

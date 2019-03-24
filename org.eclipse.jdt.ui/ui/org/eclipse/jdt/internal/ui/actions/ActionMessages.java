@@ -72,6 +72,8 @@ public final class ActionMessages extends NLS {
 	public static String OccurrencesSearchMenuAction_throwing_exception_label;
 	public static String OpenAction_error_problem_opening_editor;
 	public static String OpenAction_multistatus_message;
+	public static String OpenPopupAction_error_problem_opening_editor;
+	public static String OpenPopupAction_multistatus_message;
 	public static String OpenViewActionGroup_showInAction_label;
 	public static String OpenWithMenu_label;
 
@@ -88,6 +90,14 @@ public final class ActionMessages extends NLS {
 	public static String OpenAction_error_title;
 	public static String OpenAction_error_message;
 	public static String OpenAction_error_messageBadSelection;
+	public static String OpenPopupAction_label;
+	public static String OpenPopupAction_tooltip;
+	public static String OpenPopupAction_description;
+	public static String OpenPopupAction_declaration_label;
+	public static String OpenPopupAction_select_element;
+	public static String OpenPopupAction_error_title;
+	public static String OpenPopupAction_error_message;
+	public static String OpenPopupAction_error_messageBadSelection;
 	public static String OpenSuperImplementationAction_label;
 	public static String OpenSuperImplementationAction_tooltip;
 	public static String OpenSuperImplementationAction_description;

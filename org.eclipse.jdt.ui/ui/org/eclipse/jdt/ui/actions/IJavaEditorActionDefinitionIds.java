@@ -526,6 +526,14 @@ public interface IJavaEditorActionDefinitionIds extends ITextEditorActionDefinit
 	public static final String OPEN_ATTACHED_JAVADOC= "org.eclipse.jdt.ui.edit.text.java.open.external.javadoc"; //$NON-NLS-1$
 
 	/**
+	 * Action definition ID of the navigate -> open popup action (value
+	 * <code>"org.eclipse.jdt.ui.edit.text.java.open.editor.popup"</code>).
+	 * 
+	 * @since 3.18
+	 */
+	public static final String OPEN_POPUP= "org.eclipse.jdt.ui.edit.text.java.open.editor.popup"; //$NON-NLS-1$
+
+	/**
 	 * Action definition ID of the navigate -> open type hierarchy action
 	 * (value <code>"org.eclipse.jdt.ui.edit.text.java.org.eclipse.jdt.ui.edit.text.java.open.type.hierarchy"</code>).
 	 */

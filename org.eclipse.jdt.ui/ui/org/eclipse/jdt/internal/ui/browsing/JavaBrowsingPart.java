@@ -1005,7 +1005,8 @@ abstract class JavaBrowsingPart extends ViewPart implements IMenuListener, IView
 
 			@Override
 			protected void open(ISelection selection, boolean activate) {
-				IAction open= fOpenEditorGroup.getOpenAction();
+				IAction open= fOpenEditorGroup.getOpenPopupAction();
+				System.out.println(open.getId());
 				if (open.isEnabled()) {
 					open.run();
 					restoreSelection();

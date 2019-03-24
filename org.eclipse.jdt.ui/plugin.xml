@@ -2451,6 +2451,15 @@
                allowLabelUpdate="true"
                id="org.eclipse.jdt.ui.actions.Open">
          </action>
+         <action
+               definitionId="org.eclipse.jdt.ui.edit.text.java.open.editor.popup"
+               label="%OpenPopupAction.label"
+               tooltip="%OpenPopupAction.tooltip"
+               retarget="true"
+               menubarPath="navigate/open.ext"
+               allowLabelUpdate="true"
+               id="org.eclipse.jdt.ui.actions.OpenPopup">
+         </action>
       </actionSet>
    </extension>
    <extension
@@ -4149,6 +4158,12 @@
             id="org.eclipse.jdt.ui.edit.text.java.open.editor">
       </command>
       <command
+            name="%ActionDefinition.openPopupEditor.name"
+            description="%ActionDefinition.openPopupEditor.description"
+            categoryId="org.eclipse.ui.category.navigate"
+            id="org.eclipse.jdt.ui.edit.text.java.open.editor.popup">
+      </command>
+      <command
             name="%ActionDefinition.openImplementation.name"
             description="%ActionDefinition.openImplementation.description"
             categoryId="org.eclipse.ui.category.navigate"
@@ -4831,6 +4846,10 @@
       <key
             sequence="F3"
             commandId="org.eclipse.jdt.ui.edit.text.java.open.editor"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key
+            sequence="F6"
+            commandId="org.eclipse.jdt.ui.edit.text.java.open.editor.popup"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
       <key
             sequence="M2+F2"
