@@ -5,6 +5,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.e4.ui.model.application.ui.basic.MPart;
+import org.eclipse.e4.ui.model.application.ui.basic.MPartSashContainerElement;
+import org.eclipse.e4.ui.workbench.modeling.EModelService;
+
+import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Control;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
@@ -71,6 +79,10 @@ public class OpenPopupAction extends SelectionDispatchAction {
 
 	private JavaEditor fEditor;
 
+	private JavaEditor fOpenEditor;
+
+	private boolean isOpen;
+
 	/**
 	 * Creates a new <code>OpenPopupAction</code>. The action requires that the selection provided
 	 * by the site's selection provider is of type <code>
@@ -95,6 +107,7 @@ public class OpenPopupAction extends SelectionDispatchAction {
 	public OpenPopupAction(JavaEditor editor) {
 		this(editor.getEditorSite());
 		fEditor= editor;
+		isOpen= false;
 		setText(ActionMessages.OpenPopupAction_declaration_label);
 		setEnabled(EditorUtility.getEditorInputJavaElement(fEditor, false) != null);
 	}
@@ -126,6 +139,8 @@ public class OpenPopupAction extends SelectionDispatchAction {
 
 	@Override
 	public void run(ITextSelection selection) {
+		if (handleClose())
+			return;
 		ITypeRoot input= EditorUtility.getEditorInputJavaElement(fEditor, false);
 		if (input == null) {
 			setStatusLineMessage();
@@ -134,12 +149,12 @@ public class OpenPopupAction extends SelectionDispatchAction {
 		IRegion region= new Region(selection.getOffset(), selection.getLength());
 		OccurrenceLocation location= JavaElementHyperlinkDetector.findBreakOrContinueTarget(input, region);
 		if (location != null) {
-			fEditor.selectAndReveal(location.getOffset(), location.getLength());
+			editorRevealAndHandle(location);
 			return;
 		}
 		location= JavaElementHyperlinkDetector.findSwitchCaseTarget(input, region);
 		if (location != null) {
-			fEditor.selectAndReveal(location.getOffset(), location.getLength());
+			editorRevealAndHandle(location);
 			return;
 		}
 		try {
@@ -166,6 +181,21 @@ public class OpenPopupAction extends SelectionDispatchAction {
 			ExceptionHandler.handle(e, getShell(), getDialogTitle(), ActionMessages.OpenPopupAction_error_message);
 		} catch (InterruptedException e) {
 			// ignore
+		}
+	}
+
+	private void editorRevealAndHandle(OccurrenceLocation location) {
+		IEditorPart oldEditor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
+		fEditor.selectAndReveal(location.getOffset(), location.getLength());
+		IEditorPart newEditor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
+		if ( !newEditor.equals(oldEditor) ) {
+			EModelService service= newEditor.getSite().getService(EModelService.class);
+			MPartSashContainerElement mPart= newEditor.getSite().getService(MPart.class);
+
+			if (mPart.getCurSharedRef() != null)
+				mPart= mPart.getCurSharedRef();
+
+			service.detach(mPart, 100, 100, 300, 300);
 		}
 	}
 
@@ -232,6 +262,8 @@ public class OpenPopupAction extends SelectionDispatchAction {
 
 	@Override
 	public void run(IStructuredSelection selection) {
+		if (handleClose())
+			return;
 		if (!checkEnabled(selection))
 			return;
 		run(selection.toArray());
@@ -246,6 +278,9 @@ public class OpenPopupAction extends SelectionDispatchAction {
 	 */
 	public void run(Object[] elements) {
 		if (elements == null)
+			return;
+
+		if (handleClose())
 			return;
 
 		MultiStatus status= new MultiStatus(JavaUI.ID_PLUGIN, IStatus.OK, ActionMessages.OpenPopupAction_multistatus_message, null);
@@ -268,10 +303,7 @@ public class OpenPopupAction extends SelectionDispatchAction {
 					}
 
 				} else {
-					boolean activateOnOpen= fEditor != null ? true : OpenStrategy.activateOnOpen();
-					IEditorPart part= EditorUtility.openInEditor(javaElement, activateOnOpen);
-					if (part != null && javaElement instanceof IJavaElement)
-						JavaUI.revealInEditor(part, (IJavaElement) javaElement);
+					javaElementHandle(javaElement);
 				}
 			} catch (PartInitException e) {
 				String message= Messages.format(ActionMessages.OpenPopupAction_error_problem_opening_editor,
@@ -287,6 +319,47 @@ public class OpenPopupAction extends SelectionDispatchAction {
 		if (!status.isOK()) {
 			IStatus[] children= status.getChildren();
 			ErrorDialog.openError(getShell(), getDialogTitle(), ActionMessages.OpenPopupAction_error_message, children.length == 1 ? children[0] : status);
+		}
+	}
+
+	private boolean handleClose() {
+		if (isOpen && fOpenEditor != null) {
+			if (fOpenEditor.isSaveOnCloseNeeded())
+				fOpenEditor.close(true);
+			else
+				fOpenEditor.close(false);
+
+			fOpenEditor= null;
+			isOpen= false;
+
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private void javaElementHandle(Object javaElement) throws PartInitException {
+		boolean activateOnOpen= fEditor != null ? true : OpenStrategy.activateOnOpen();
+		IEditorPart part= EditorUtility.openInEditor(javaElement, activateOnOpen);
+		if (part != null && javaElement instanceof IJavaElement) {
+			JavaUI.revealInEditor(part, (IJavaElement) javaElement);
+
+			/* Check if javaElement's associated editor is new -> detach and position */
+			if (!fEditor.toString().equals(part.toString())) {
+				EModelService service= part.getSite().getService(EModelService.class);
+				MPartSashContainerElement mPart= part.getSite().getService(MPart.class);
+
+				if (mPart.getCurSharedRef() != null)
+					mPart= mPart.getCurSharedRef();
+
+				StyledText text= (StyledText) fEditor.getAdapter(Control.class);
+				Point relPos= text.getLocationAtOffset(text.getCaretOffset());
+				Point absPos= text.toDisplay(relPos);
+				service.detach(mPart, absPos.x, absPos.y + text.getLineHeight(), 680, 350);
+
+				fOpenEditor= (JavaEditor) part;
+				isOpen= true;
+			}
 		}
 	}
 
