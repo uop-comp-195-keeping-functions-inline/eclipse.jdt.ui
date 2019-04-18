@@ -505,4 +505,5 @@ public interface IJavaHelpContextIds {
 	 * @since 3.17
 	 */
 	public static final String OPEN_POPUP_ACTION= PREFIX + "open_popup_action"; //$NON-NLS-1$
+	public static final String OPEN_POPUP_JAVADOC_ACTION= PREFIX + "open_popup_javadoc_action"; //$NON-NLS-1$
 }

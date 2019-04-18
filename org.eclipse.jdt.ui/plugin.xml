@@ -2536,6 +2536,14 @@
                id="org.eclipse.jdt.ui.actions.OpenExternalJavaDoc">
          </action>
          <action
+               definitionId="org.eclipse.jdt.ui.edit.text.java.open.external.javadoc.popup"
+               label="%OpenPopupJavadocAction.label"
+               retarget="true"
+               allowLabelUpdate="true"
+               menubarPath="navigate/open.ext"
+               id="org.eclipse.jdt.ui.actions.OpenPopupJavaDoc">
+         </action>
+         <action
                definitionId="org.eclipse.jdt.ui.edit.text.java.open.super.implementation"
                label="%OpenSuperImplementationAction.label"
                tooltip="%OpenSuperImplementationAction.tooltip"
@@ -4164,6 +4172,12 @@
             id="org.eclipse.jdt.ui.edit.text.java.open.editor.popup">
       </command>
       <command
+            name="%ActionDefinition.openPopupJavadoc.name"
+            description="%ActionDefinition.openPopupJavadoc.description"
+            categoryId="org.eclipse.ui.category.navigate"
+            id="org.eclipse.jdt.ui.edit.text.java.open.external.javadoc.popup">
+      </command>
+      <command
             name="%ActionDefinition.openImplementation.name"
             description="%ActionDefinition.openImplementation.description"
             categoryId="org.eclipse.ui.category.navigate"
@@ -4854,6 +4868,10 @@
       <key
             sequence="M2+F2"
             commandId="org.eclipse.jdt.ui.edit.text.java.open.external.javadoc"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key
+            sequence="M2+F3"
+            commandId="org.eclipse.jdt.ui.edit.text.java.open.external.javadoc.popup"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
       <key
             sequence="F4"

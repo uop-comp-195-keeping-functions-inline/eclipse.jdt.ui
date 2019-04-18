@@ -276,6 +276,15 @@ public final class ActionMessages extends NLS {
 	public static String OpenAttachedJavadocAction_opening_failed;
 	public static String OpenAttachedJavadocAction_dialog_title;
 	public static String OpenAttachedJavadocAction_code_resolve_failed;
+	public static String OpenPopupJavadocAction_label;
+	public static String OpenPopupJavadocAction_description;
+	public static String OpenPopupJavadocAction_tooltip;
+	public static String OpenPopupJavadocAction_select_element;
+	public static String OpenPopupJavadocAction_libraries_no_location;
+	public static String OpenPopupJavadocAction_source_no_location;
+	public static String OpenPopupJavadocAction_opening_failed;
+	public static String OpenPopupJavadocAction_dialog_title;
+	public static String OpenPopupJavadocAction_code_resolve_failed;
 	public static String SelfEncapsulateFieldAction_label;
 	public static String SelfEncapsulateFieldAction_dialog_title;
 	public static String SelfEncapsulateFieldAction_dialog_unavailable;

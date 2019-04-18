@@ -92,6 +92,14 @@ public class JdtActionConstants {
 	public static final String OPEN_ATTACHED_JAVA_DOC= "org.eclipse.jdt.ui.actions.OpenExternalJavaDoc"; //$NON-NLS-1$
 
 	/**
+	 * Navigate menu: name of standard Open Popup Javadoc global action (value
+	 * <code>"org.eclipse.jdt.ui.actions.OpenPopupJavaDoc"</code>).
+	 * 
+	 * @since 3.18
+	 */
+	public static final String OPEN_POPUP_JAVA_DOC= "org.eclipse.jdt.ui.actions.OpenPopupJavaDoc"; //$NON-NLS-1$
+
+	/**
 	 * Navigate menu: name of standard Open Popup global action (value
 	 * <code>"org.eclipse.jdt.ui.actions.OpenPopup"</code>).
 	 * 
