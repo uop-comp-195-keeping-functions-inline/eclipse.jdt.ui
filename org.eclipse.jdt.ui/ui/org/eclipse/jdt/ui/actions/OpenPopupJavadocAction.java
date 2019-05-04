@@ -201,7 +201,7 @@ public class OpenPopupJavadocAction extends SelectionDispatchAction {
 			service.detach(mPart, absPos.x, absPos.y + text.getLineHeight(), 680, 450);
 		}
 
-		}
+	}
 
 	/**
 	 * Tells whether to use an external browser or the one chosen by the preferences.
