@@ -63,6 +63,8 @@ public class OpenViewActionGroup extends ActionGroup {
 	private OpenImplementationAction fOpenImplementation;
 
 	private OpenAttachedJavadocAction fOpenAttachedJavadoc;
+
+	private OpenPopupJavadocAction fOpenPopupJavadoc;
 	private OpenTypeHierarchyAction fOpenTypeHierarchy;
     private OpenCallHierarchyAction fOpenCallHierarchy;
 	private PropertyDialogAction fOpenPropertiesDialog;
@@ -163,6 +165,10 @@ public class OpenViewActionGroup extends ActionGroup {
 		fOpenAttachedJavadoc.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_ATTACHED_JAVADOC);
 		part.setAction("OpenAttachedJavadoc", fOpenAttachedJavadoc); //$NON-NLS-1$
 
+		fOpenPopupJavadoc= new OpenPopupJavadocAction(part);
+		fOpenPopupJavadoc.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_POPUP_JAVADOC);
+		part.setAction("OpenPopupJavadoc", fOpenPopupJavadoc); //$NON-NLS-1$
+
 		fOpenTypeHierarchy= new OpenTypeHierarchyAction(part);
 		fOpenTypeHierarchy.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_TYPE_HIERARCHY);
 		part.setAction("OpenTypeHierarchy", fOpenTypeHierarchy); //$NON-NLS-1$
@@ -209,6 +215,10 @@ public class OpenViewActionGroup extends ActionGroup {
 		fOpenAttachedJavadoc.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_ATTACHED_JAVADOC);
 		fOpenAttachedJavadoc.setSpecialSelectionProvider(specialProvider);
 
+		fOpenPopupJavadoc= new OpenPopupJavadocAction(site);
+		fOpenPopupJavadoc.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_POPUP_JAVADOC);
+		fOpenPopupJavadoc.setSpecialSelectionProvider(specialProvider);
+
 		fOpenTypeHierarchy= new OpenTypeHierarchyAction(site);
 		fOpenTypeHierarchy.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_TYPE_HIERARCHY);
 		fOpenTypeHierarchy.setSpecialSelectionProvider(specialProvider);
@@ -231,6 +241,7 @@ public class OpenViewActionGroup extends ActionGroup {
 		fOpenImplementation.update(selection);
 		fOpenSuperImplementation.update(selection);
 		fOpenAttachedJavadoc.update(selection);
+		fOpenPopupJavadoc.update(selection);
 		fOpenTypeHierarchy.update(selection);
 		fOpenCallHierarchy.update(selection);
 		if (!fEditorIsOwner) {
@@ -244,6 +255,7 @@ public class OpenViewActionGroup extends ActionGroup {
 			provider.addSelectionChangedListener(fOpenImplementation);
 			provider.addSelectionChangedListener(fOpenSuperImplementation);
 			provider.addSelectionChangedListener(fOpenAttachedJavadoc);
+			provider.addSelectionChangedListener(fOpenPopupJavadoc);
 			provider.addSelectionChangedListener(fOpenTypeHierarchy);
 			provider.addSelectionChangedListener(fOpenCallHierarchy);
 			// no need to register the open properties dialog action since it registers itself
@@ -297,6 +309,7 @@ public class OpenViewActionGroup extends ActionGroup {
 		fSelectionProvider.removeSelectionChangedListener(fOpenImplementation);
 		fSelectionProvider.removeSelectionChangedListener(fOpenSuperImplementation);
 		fSelectionProvider.removeSelectionChangedListener(fOpenAttachedJavadoc);
+		fSelectionProvider.removeSelectionChangedListener(fOpenPopupJavadoc);
 		fSelectionProvider.removeSelectionChangedListener(fOpenTypeHierarchy);
 		fSelectionProvider.removeSelectionChangedListener(fOpenCallHierarchy);
 		super.dispose();
@@ -306,6 +319,7 @@ public class OpenViewActionGroup extends ActionGroup {
 		actionBars.setGlobalActionHandler(JdtActionConstants.OPEN_IMPLEMENTATION, fOpenImplementation);
 		actionBars.setGlobalActionHandler(JdtActionConstants.OPEN_SUPER_IMPLEMENTATION, fOpenSuperImplementation);
 		actionBars.setGlobalActionHandler(JdtActionConstants.OPEN_ATTACHED_JAVA_DOC, fOpenAttachedJavadoc);
+		actionBars.setGlobalActionHandler(JdtActionConstants.OPEN_POPUP_JAVA_DOC, fOpenPopupJavadoc);
 		actionBars.setGlobalActionHandler(JdtActionConstants.OPEN_TYPE_HIERARCHY, fOpenTypeHierarchy);
 		actionBars.setGlobalActionHandler(JdtActionConstants.OPEN_CALL_HIERARCHY, fOpenCallHierarchy);
 
